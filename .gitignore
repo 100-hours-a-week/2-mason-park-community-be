@@ -246,3 +246,4 @@ Temporary Items
 # End of https://www.toptal.com/developers/gitignore/api/intellij,webstorm,macos,visualstudiocode
 
 node_modules
+.env
