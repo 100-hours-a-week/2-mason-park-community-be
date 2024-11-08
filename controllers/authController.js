@@ -59,16 +59,15 @@ exports.register = (req, res) => {
 
         return res.status(200).json(functions.baseResponse("OK", {userId: user.id}));
     } catch (e) {
-        console.log(e);
         return res.status(500).json(functions.baseResponse("Internal Server Error"));
     }
 }
 
-exports.existsEmail = (res, req) => {
+exports.existsEmail = (req, res) => {
     try {
-        const { email } = req.params.email;
+        const { email } = req.query;
 
-        if (!userModel.existEmail(email)) {
+        if (!userModel.existsEmail(email)) {
             return res.status(409).json(functions.baseResponse("Conflict"));
         }
         return res.status(200).json(functions.baseResponse("OK"));
@@ -77,11 +76,11 @@ exports.existsEmail = (res, req) => {
     }
 }
 
-exports.existsNickname = (res, req) => {
+exports.existsNickname = (req, res) => {
     try {
-        const { nickname } = req.params.nickname;
+        const { nickname } = req.query
 
-        if (!userModel.existNickname(nickname)) {
+        if (!userModel.existsNickname(nickname)) {
             return res.status(409).json(functions.baseResponse("Conflict"));
         }
         return res.status(200).json(functions.baseResponse("OK"));
