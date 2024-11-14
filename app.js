@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
+const status = require('./utils/message');
 const app = express();
 
 // == Middleware 설정 ==
@@ -29,11 +30,8 @@ app.use(session({
 
 // 에러 핸들링
 app.use('/api', (err, req, res, next) => {
-    console.error('Error Message:', err.message);
-    console.error('Stack Trace:', err.stack);
-
     // 에러 응답 전송
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: status.INTERNAL_SERVER_ERROR.message , error: err});
 });
 
 // Route 설정

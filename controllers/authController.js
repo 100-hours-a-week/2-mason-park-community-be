@@ -8,6 +8,18 @@ const CRYPTO_SECRET_KEY = process.env.CRYPTO_SECRET_KEY;
 exports.login = (req, res, next) => {
     try {
         const { email, password } = req.body;
+        const decodedPassword = Buffer.from(password,"base64").toString("utf-8");
+
+        const isValid = !(
+            email && validator.validateEmail(email)
+            && decodedPassword && validator.validatePassword(decodedPassword)
+        );
+
+        if (!isValid) {
+            return res
+                .status(400)
+                .json(functions.baseResponse(status.BAD_REQUEST.message))
+        }
 
         const user = userModel.findUserByEmail(email);
         if (!user) {

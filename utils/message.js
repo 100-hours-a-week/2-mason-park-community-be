@@ -7,10 +7,16 @@ const status = {
     "CREATED_USER": {
         "message" : "사용자가 성공적으로 등록되었습니다."
     },
+    "CREATED_IMAGE": {
+        "message" : "이미지가 성공적으로 등록되었습니다."
+    },
 
     /* ---- 400 ---- */
     "BAD_REQUEST": {
         "message" : "잘못된 요청입니다. 입력값을 확인해주세요."
+    },
+    "BAD_REQUEST_IMAGE": {
+        "message" : "잘못된 요청입니다. 이미지 파일을 확인해주세요."
     },
     "UNAUTHORIZED": {
         "message" : "인증되지 않은 사용자입니다."
