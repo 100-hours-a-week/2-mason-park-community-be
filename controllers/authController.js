@@ -2,6 +2,7 @@ const userModel = require('../models/userModel');
 const functions = require("../utils/functions");
 const validator = require("../utils/validator");
 const crypto = require("crypto-js");
+const status = require("../utils/message");
 const CRYPTO_SECRET_KEY = process.env.CRYPTO_SECRET_KEY;
 
 exports.login = (req, res, next) => {
@@ -10,13 +11,17 @@ exports.login = (req, res, next) => {
 
         const user = userModel.findUserByEmail(email);
         if (!user) {
-            return res.status(404).json(functions.baseResponse("Not Found"))
+            return res
+                .status(404)
+                .json(functions.baseResponse(status.NOT_FOUND_USER.message))
         }
 
         const decryptedPassword = crypto.AES.decrypt(user.password, CRYPTO_SECRET_KEY);
         
         if (decryptedPassword.toString(crypto.enc.Utf8) !== password) {
-            return res.status(401).json(functions.baseResponse("Unauthorized"));
+            return res
+                .status(401)
+                .json(functions.baseResponse(status.UNAUTHORIZED.message));
         }
 
         // 로그인 성공 세션 저장 및 쿠키 설정
@@ -32,7 +37,41 @@ exports.login = (req, res, next) => {
             secure: false,
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
-        return res.status(200).json(functions.baseResponse("OK"));
+
+        return res
+            .status(200)
+            .json(functions.baseResponse(status.OK.message));
+    } catch (e) {
+        next(e);
+    }
+}
+
+exports.logout = (req, res, next) => {
+    try {
+        // 세션 제거
+        req.session.destroy((err) => {
+            if (err) {
+                return res
+                    .status(500)
+                    .json(functions.baseResponse(status.INTERNAL_SERVER_ERROR.message));
+            }
+        });
+        console.log('cookie delete')
+        // 쿠키 제거
+        res.cookie('session_id', null, {
+            httpOnly: true,
+            secure: false,
+            maxAge: 0
+        })
+        res.cookie('user_id', null, {
+            httpOnly: true,
+            secure: false,
+            maxAge: 0
+        })
+
+        return res
+            .status(200)
+            .json(functions.baseResponse(status.OK.message));
     } catch (e) {
         next(e);
     }
@@ -41,30 +80,37 @@ exports.login = (req, res, next) => {
 exports.register = (req, res, next) => {
     try {
         const { email, password, nickname, profile_image } = req.body;
+        const decodedPassword = Buffer.from(password, "base64").toString("utf-8");
 
         // 유효성 검사
         const isValid = (
             email && validator.validateEmail(email)
-            && password && validator.validatePassword(password)
+            && decodedPassword && validator.validatePassword(decodedPassword)
             && nickname && validator.validateNickname(nickname)
         );
 
         if (!isValid) {
-            return res.status(400).json(functions.baseResponse("Bad Request"));
+            return res
+                .status(400)
+                .json(functions.baseResponse(status.BAD_REQUEST.message));
         }
 
         // 이메일 중복 검사
         if (userModel.existsEmail(email)) {
-            return res.status(409).json(functions.baseResponse("Email Conflict"));
+            return res
+                .status(409)
+                .json(functions.baseResponse(status.CONFLICT_EMAIL.message));
         }
 
         // 닉네임 중복 검사
         if (userModel.existsNickname(nickname)) {
-            return res.status(409).json(functions.baseResponse("Nickname Conflict"));
+            return res
+                .status(409)
+                .json(functions.baseResponse(status.CONFLICT_NICKNAME.message));
         }
 
         // 패스워드 암호화
-        const encryptedPassword = crypto.AES.encrypt(password, CRYPTO_SECRET_KEY).toString();
+        const encryptedPassword = crypto.AES.encrypt(decodedPassword, CRYPTO_SECRET_KEY).toString();
 
         const user = userModel.save(
             email,
@@ -73,7 +119,9 @@ exports.register = (req, res, next) => {
             profile_image
         );
 
-        return res.status(201).json(functions.baseResponse("OK", {userId: user.id}));
+        return res
+            .status(201)
+            .json(functions.baseResponse(status.CREATED_USER.message, {userId: user.id}));
     } catch (e) {
         next(e);
     }
@@ -83,10 +131,14 @@ exports.existsEmail = (req, res, next) => {
     try {
         const { email } = req.query;
 
-        if (!userModel.existsEmail(email)) {
-            return res.status(409).json(functions.baseResponse("Conflict"));
+        if (userModel.existsEmail(email)) {
+            return res
+                .status(409)
+                .json(functions.baseResponse(status.CONFLICT_EMAIL.message));
         }
-        return res.status(200).json(functions.baseResponse("OK"));
+        return res
+            .status(200)
+            .json(functions.baseResponse(status.OK.message));
     } catch (e) {
         next(e);
     }
@@ -96,10 +148,14 @@ exports.existsNickname = (req, res, next) => {
     try {
         const { nickname } = req.query
 
-        if (!userModel.existsNickname(nickname)) {
-            return res.status(409).json(functions.baseResponse("Conflict"));
+        if (userModel.existsNickname(nickname)) {
+            return res
+                .status(409)
+                .json(functions.baseResponse(status.CONFLICT_NICKNAME.message));
         }
-        return res.status(200).json(functions.baseResponse("OK"));
+        return res
+            .status(200)
+            .json(functions.baseResponse(status.OK.message));
     } catch (e) {
         next(e);
     }
