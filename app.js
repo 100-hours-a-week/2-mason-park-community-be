@@ -1,6 +1,6 @@
 const express = require('express');
-const session = require("express-session");
-
+const session = require('express-session');
+const cors = require('cors');
 const app = express();
 
 // == Middleware 설정 ==
@@ -9,7 +9,10 @@ const app = express();
 app.use(express.json());
 
 // CORS
-
+app.use(cors({
+    origin: 'http://localhost:3000', // 허용할 출처 (default : 모든 출처 허용)
+    credentials: true, // 쿠키, 인증 정보 전송 허용 여부 (default : false)
+}));
 
 // 세션
 app.use(session({
