@@ -1,4 +1,5 @@
 const express = require('express');
+const morgan = require('morgan');
 const session = require('express-session');
 const cors = require('cors');
 const status = require('./utils/message');
@@ -8,6 +9,9 @@ const app = express();
 
 // 요청 body JSON 파싱
 app.use(express.json());
+
+// 로깅
+app.use(morgan('dev'));
 
 // CORS
 app.use(cors({

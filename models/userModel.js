@@ -11,11 +11,17 @@ function User (id, email, password, nickname, profile_image) {
     this.profile_image = profile_image;
 }
 
-exports.findUserByEmail = (email) => {
+exports.findByEmail = (email) => {
     const users = functions.readDB(PATH);
 
     return users.find((user) => user.email === email);
 };
+
+exports.findById = (id) => {
+    const users = functions.readDB(PATH);
+
+    return users.find((user) => user.id === id);
+}
 
 exports.save = (email, password, nickname, profile_image) => {
     const users = functions.readDB(PATH);
@@ -32,6 +38,40 @@ exports.save = (email, password, nickname, profile_image) => {
     functions.writeDB(PATH, users);
 
     return user;
+}
+
+exports.update = (id, profile_image, nickname) => {
+    const users = functions.readDB(PATH);
+
+    const targetIdx = users.findIndex((user) => user.id === id);
+    if (targetIdx === -1) {
+        return null;
+    }
+
+    users[targetIdx] = {
+        ...users[targetIdx],
+        profile_image: profile_image ? profile_image : users[targetIdx].profile_image,
+        nickname: nickname ? nickname : users[targetIdx].nickname,
+    };
+
+    functions.writeDB(PATH, users);
+
+    return users[targetIdx];
+}
+
+exports.delete = (id) => {
+    const users = functions.readDB(PATH);
+
+    const targetIdx = users.findIndex((user) => user.id === id);
+    if (targetIdx === -1) {
+        return false;
+    }
+
+    // 회원 삭제
+    users.splice(targetIdx, 1);
+
+    functions.writeDB(PATH, users);
+    return true;
 }
 
 exports.existsEmail = (email) => {

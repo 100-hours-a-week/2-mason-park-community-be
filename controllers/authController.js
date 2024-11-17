@@ -8,9 +8,9 @@ const CRYPTO_SECRET_KEY = process.env.CRYPTO_SECRET_KEY;
 exports.login = (req, res, next) => {
     try {
         const { email, password } = req.body;
-        const decodedPassword = Buffer.from(password,"base64").toString("utf-8");
+        const decodedPassword = Buffer.from(password, "base64").toString("utf-8");
 
-        const isValid = !(
+        const isValid = (
             email && validator.validateEmail(email)
             && decodedPassword && validator.validatePassword(decodedPassword)
         );
@@ -21,7 +21,7 @@ exports.login = (req, res, next) => {
                 .json(functions.baseResponse(status.BAD_REQUEST.message))
         }
 
-        const user = userModel.findUserByEmail(email);
+        const user = userModel.findByEmail(email);
         if (!user) {
             return res
                 .status(404)
@@ -29,8 +29,7 @@ exports.login = (req, res, next) => {
         }
 
         const decryptedPassword = crypto.AES.decrypt(user.password, CRYPTO_SECRET_KEY);
-        
-        if (decryptedPassword.toString(crypto.enc.Utf8) !== password) {
+        if (decryptedPassword.toString(crypto.enc.Utf8) !== decodedPassword) {
             return res
                 .status(401)
                 .json(functions.baseResponse(status.UNAUTHORIZED.message));
@@ -67,19 +66,21 @@ exports.logout = (req, res, next) => {
                     .status(500)
                     .json(functions.baseResponse(status.INTERNAL_SERVER_ERROR.message));
             }
+
+            // 쿠키 제거
+            res.clearCookie('session_id', {
+                httpOnly: true,
+                secure: false,
+                path: '/',
+                maxAge: 0
+            });
+            res.clearCookie('user_id', {
+                httpOnly: true,
+                secure: false,
+                path: '/',
+                maxAge: 0
+            });
         });
-        console.log('cookie delete')
-        // 쿠키 제거
-        res.cookie('session_id', null, {
-            httpOnly: true,
-            secure: false,
-            maxAge: 0
-        })
-        res.cookie('user_id', null, {
-            httpOnly: true,
-            secure: false,
-            maxAge: 0
-        })
 
         return res
             .status(200)
