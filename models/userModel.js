@@ -3,8 +3,8 @@ const functions = require('../utils/functions');
 
 const PATH = path.join(__dirname, process.env.DB_PATH_USER);
 
-function User (id, email, password, nickname, profile_image) {
-    this.id = id;
+function User (user_id, email, password, nickname, profile_image) {
+    this.user_id = user_id;
     this.email = email;
     this.password = password;
     this.nickname = nickname;
@@ -14,13 +14,13 @@ function User (id, email, password, nickname, profile_image) {
 exports.findByEmail = (email) => {
     const users = functions.readDB(PATH);
 
-    return users.find((user) => user.email === email);
+    return users.find((user) => String(user.email) === String(email));
 };
 
 exports.findById = (id) => {
     const users = functions.readDB(PATH);
 
-    return users.find((user) => user.id === id);
+    return users.find((user) => String(user.user_id) === String(id));
 }
 
 exports.save = (email, password, nickname, profile_image) => {
@@ -43,7 +43,7 @@ exports.save = (email, password, nickname, profile_image) => {
 exports.update = (id, profile_image, nickname) => {
     const users = functions.readDB(PATH);
 
-    const targetIdx = users.findIndex((user) => user.id === id);
+    const targetIdx = users.findIndex((user) => String(user.user_id) === String(id));
     if (targetIdx === -1) {
         return null;
     }
@@ -59,10 +59,28 @@ exports.update = (id, profile_image, nickname) => {
     return users[targetIdx];
 }
 
+exports.updatePassword = (id, password) => {
+    const users = functions.readDB(PATH);
+
+    const targetIdx = users.findIndex((user) => String(user.user_id) === String(id));
+    if (targetIdx === -1) {
+        return null;
+    }
+
+    users[targetIdx] = {
+        ...users[targetIdx],
+        password: password ? password : users[targetIdx].password,
+    };
+
+    functions.writeDB(PATH, users);
+
+    return users[targetIdx];
+}
+
 exports.delete = (id) => {
     const users = functions.readDB(PATH);
 
-    const targetIdx = users.findIndex((user) => user.id === id);
+    const targetIdx = users.findIndex((user) => user.user_id === id);
     if (targetIdx === -1) {
         return false;
     }

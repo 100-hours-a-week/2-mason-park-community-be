@@ -1,4 +1,5 @@
 const fs = require('fs');
+const {data} = require("express-session/session/cookie");
 const ENCODING_FORMAT = 'utf-8';
 
 exports.readDB = (path) => {
@@ -13,7 +14,30 @@ exports.writeDB = (path, data) => {
 
 exports.baseResponse = (message='', data) => {
     return {
-        "message" : message,
-        "data" : data
+        message: message,
+        data: data
     }
+}
+
+exports.page = (offset, limit, total, data) => {
+    return {
+        offset: offset,
+        limit: limit,
+        total: total,
+        data: data
+    }
+}
+
+exports.pageResponse = (message='', offset, limit, total, data) => {
+    return {
+        message: message,
+        offset: offset,
+        limit: limit,
+        total: total,
+        data: data
+    }
+}
+
+exports.formatDate = (date) => {
+    return `${date.year}`
 }

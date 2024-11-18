@@ -21,8 +21,14 @@ const status = {
     "UNAUTHORIZED": {
         "message" : "인증되지 않은 사용자입니다."
     },
+    "FORBIDDEN_POST": {
+        "message" : "해당 게시글에 접근 권한이 없습니다."
+    },
     "NOT_FOUND_USER": {
         "message" : "해당 유저가 존재하지 않습니다."
+    },
+    "NOT_FOUND_POST": {
+        "message" : "해당 게시글이 존재하지 않습니다."
     },
     "CONFLICT_EMAIL": {
         "message" : "이미 존재하는 이메일입니다."

@@ -22,6 +22,12 @@ const uploader = multer({
         const allowedExtensions = process.env.ALLOWED_FILE_EXTENSIONS.split(',');
         const extension = path.extname(file.originalname).toLowerCase();
 
+        // JSON 파일은 항상 허용
+        if (file.mimetype === 'application/json') {
+            cb(null, true);
+            return;
+        }
+
         // 확장자가 허용된 목록에 있는지 확인
         if (allowedExtensions.includes(extension)) {
             cb(null, true); // 통과

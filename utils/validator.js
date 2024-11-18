@@ -12,3 +12,12 @@ exports.validatePassword = password => {
     // 비밀번호는 8자 이상 / 20자 이하 / 대소문자, 숫자, 특수문자를 각각 최소 1개 포함
     return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/.test(password);
 }
+
+exports.validatePostTitle = title => {
+    const len = title.length;
+    return 0 < len && len < 27;
+}
+
+exports.validateId = id => {
+    return !Number(id) || id <= 0;
+}

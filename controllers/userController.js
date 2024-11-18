@@ -1,8 +1,9 @@
 const userModel = require('../models/userModel');
 const functions = require('../utils/functions');
-const status = require('../utils/message');
 const path = require('path');
 const validator = require("../utils/validator");
+const crypto = require("crypto-js");
+const status = require('../utils/message');
 
 exports.uploadProfileImage = (req, res, next) => {
     try {
@@ -29,7 +30,7 @@ exports.getMyProfile = (req, res, next) => {
         return res
             .status(200)
             .json(functions.baseResponse(status.OK.message, {
-                'user_id': req.session.user.id,
+                'user_id': req.session.user.user_id,
                 'email': req.session.user.email,
                 'nickname': req.session.user.nickname,
                 'profile_image': req.session.user.profile_image
@@ -66,7 +67,42 @@ exports.updateMyProfile = (req, res, next) => {
 
         return res
             .status(200)
-            .json(functions.baseResponse(status.OK.message, {'user_id': user.id}));
+            .json(functions.baseResponse(status.OK.message, {'user_id': user.user_id}));
+
+    } catch (e) {
+        next(e);
+    }
+}
+
+exports.updatePassword = (req, res, next) => {
+    try {
+        const { password } = req.body;
+        const decodedPassword = Buffer.from(password, "base64").toString("utf-8");
+
+        // 유효성 검사
+        const isValid = (
+            decodedPassword && validator.validatePassword(decodedPassword)
+        );
+
+        if (!isValid) {
+            return res
+                .status(400)
+                .json(functions.baseResponse(status.BAD_REQUEST.message));
+        }
+
+        // 유저 정보 수정
+        const encryptedPassword = crypto.AES.encrypt(decodedPassword, process.env.CRYPTO_SECRET_KEY).toString();
+        const user = userModel.updatePassword(req.session.user.id, encryptedPassword);
+
+        if(!user) {
+            return res
+                .status(404)
+                .json(functions.baseResponse(status.NOT_FOUND_USER.message))
+        }
+
+        return res
+            .status(200)
+            .json(functions.baseResponse(status.OK.message, {'user_id': user.user_id}));
 
     } catch (e) {
         next(e);

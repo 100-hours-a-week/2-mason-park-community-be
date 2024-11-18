@@ -3,7 +3,6 @@ const functions = require("../utils/functions");
 const validator = require("../utils/validator");
 const crypto = require("crypto-js");
 const status = require("../utils/message");
-const CRYPTO_SECRET_KEY = process.env.CRYPTO_SECRET_KEY;
 
 exports.login = (req, res, next) => {
     try {
@@ -28,7 +27,7 @@ exports.login = (req, res, next) => {
                 .json(functions.baseResponse(status.NOT_FOUND_USER.message))
         }
 
-        const decryptedPassword = crypto.AES.decrypt(user.password, CRYPTO_SECRET_KEY);
+        const decryptedPassword = crypto.AES.decrypt(user.password, process.env.CRYPTO_SECRET_KEY);
         if (decryptedPassword.toString(crypto.enc.Utf8) !== decodedPassword) {
             return res
                 .status(401)
@@ -37,13 +36,13 @@ exports.login = (req, res, next) => {
 
         // 로그인 성공 세션 저장 및 쿠키 설정
         req.session.user = {
-            id: user.id,
+            id: user.user_id,
             email: user.email,
             nickname: user.nickname,
             profile_image: user.profile_image
         };
 
-        res.cookie('user_id', user.id, {
+        res.cookie('user_id', user.user_id, {
             httpOnly: true,
             secure: false,
             maxAge: 7 * 24 * 60 * 60 * 1000
@@ -123,7 +122,7 @@ exports.register = (req, res, next) => {
         }
 
         // 패스워드 암호화
-        const encryptedPassword = crypto.AES.encrypt(decodedPassword, CRYPTO_SECRET_KEY).toString();
+        const encryptedPassword = crypto.AES.encrypt(decodedPassword, process.env.CRYPTO_SECRET_KEY).toString();
 
         const user = userModel.save(
             email,
@@ -134,7 +133,7 @@ exports.register = (req, res, next) => {
 
         return res
             .status(201)
-            .json(functions.baseResponse(status.CREATED_USER.message, {userId: user.id}));
+            .json(functions.baseResponse(status.CREATED_USER.message, {user_id: user.id}));
     } catch (e) {
         next(e);
     }

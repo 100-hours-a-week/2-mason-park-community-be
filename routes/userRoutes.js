@@ -8,6 +8,7 @@ const userController = require('../controllers/userController');
 router.post('/profile-image', uploader.single('profile_image'), userController.uploadProfileImage);
 router.get('/me', authenticator.isAuthenticated, userController.getMyProfile);
 router.patch('/me', authenticator.isAuthenticated, userController.updateMyProfile);
+router.patch('/me/password', authenticator.isAuthenticated, userController.updatePassword);
 router.delete('/withdraw', authenticator.isAuthenticated, userController.withdraw);
 
 module.exports = router;
