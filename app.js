@@ -27,8 +27,8 @@ app.use(session({
         maxAge: 7 * 24 * 60 * 60 * 1000
     },
     secret: process.env.SESSION_SECRET_KEY,
-    resave: false, // 세션을 언제나 저장할지 설정함
-    saveUninitialized: true, // 세션에 저장할 내역이 없더라도 처음부터 세션을 생성할지 설정
+    resave: false, // 세션에 변경사항이 없더라도 저장
+    saveUninitialized: false, // 초기화되지 않은 세션도 저장
     name: 'session_id' // 세션 쿠키 이름
 }));
 

@@ -36,10 +36,8 @@ exports.login = (req, res, next) => {
 
         // 로그인 성공 세션 저장 및 쿠키 설정
         req.session.user = {
-            id: user.user_id,
-            email: user.email,
-            nickname: user.nickname,
-            profile_image: user.profile_image
+            user_id: user.user_id,
+            is_authenticated: true
         };
 
         res.cookie('user_id', user.user_id, {
@@ -48,9 +46,16 @@ exports.login = (req, res, next) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
-        return res
-            .status(200)
-            .json(functions.baseResponse(status.OK.message));
+        req.session.save((err) => {
+            if (err) {
+                return res
+                    .status(500)
+                    .json(functions.baseResponse(status.INTERNAL_SERVER_ERROR.message));
+            }
+            return res
+                .status(200)
+                .json(functions.baseResponse(status.OK.message));
+        });
     } catch (e) {
         next(e);
     }

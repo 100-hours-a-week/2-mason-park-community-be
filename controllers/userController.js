@@ -27,14 +27,20 @@ exports.uploadProfileImage = (req, res, next) => {
 
 exports.getMyProfile = (req, res, next) => {
     try {
+
+        const user = userModel.findById(req.session.user.user_id);
+        if (!user) {
+            return res
+                .status(404)
+                .json(functions.baseResponse(status.NOT_FOUND_USER.message));
+        }
+
         return res
             .status(200)
             .json(functions.baseResponse(status.OK.message, {
-                'user_id': req.session.user.user_id,
-                'email': req.session.user.email,
-                'nickname': req.session.user.nickname,
-                'profile_image': req.session.user.profile_image
-            }))
+                ...user,
+                is_authenticated: !!req.session.user.is_authenticated,
+            }));
     } catch (e) {
         next(e);
     }
@@ -57,17 +63,18 @@ exports.updateMyProfile = (req, res, next) => {
         }
 
         // 유저 정보 수정
-        const user = userModel.update(req.session.user.id, profile_image, nickname);
-
+        const user = userModel.findById(req.session.user.user_id);
         if(!user) {
             return res
                 .status(404)
                 .json(functions.baseResponse(status.NOT_FOUND_USER.message))
         }
 
+        const updateUser = userModel.update(user.user_id, profile_image, nickname);
+
         return res
             .status(200)
-            .json(functions.baseResponse(status.OK.message, {'user_id': user.user_id}));
+            .json(functions.baseResponse(status.OK.message, {'user_id': updateUser.user_id}));
 
     } catch (e) {
         next(e);
@@ -92,17 +99,19 @@ exports.updatePassword = (req, res, next) => {
 
         // 유저 정보 수정
         const encryptedPassword = crypto.AES.encrypt(decodedPassword, process.env.CRYPTO_SECRET_KEY).toString();
-        const user = userModel.updatePassword(req.session.user.id, encryptedPassword);
 
+        const user = userModel.findById(req.session.user.user_id);
         if(!user) {
             return res
                 .status(404)
                 .json(functions.baseResponse(status.NOT_FOUND_USER.message))
         }
 
+        const updateUser =  userModel.updatePassword(user.user_id, encryptedPassword);
+
         return res
             .status(200)
-            .json(functions.baseResponse(status.OK.message, {'user_id': user.user_id}));
+            .json(functions.baseResponse(status.OK.message, {'user_id': updateUser.user_id}));
 
     } catch (e) {
         next(e);
@@ -112,9 +121,9 @@ exports.updatePassword = (req, res, next) => {
 exports.withdraw = (req, res, next) => {
     try {
         // 유저 정보 삭제
-        const result = userModel.delete(req.session.user.id);
+        const user = userModel.findById(req.session.user.user_id);
 
-        if (!result) {
+        if(!user) {
             return res
                 .status(404)
                 .json(functions.baseResponse(status.NOT_FOUND_USER.message))
@@ -139,6 +148,8 @@ exports.withdraw = (req, res, next) => {
                 maxAge: 0
             })
         })
+
+        userModel.delete(user.user_id);
 
         return res
             .status(204)

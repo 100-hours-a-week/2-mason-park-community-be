@@ -30,11 +30,11 @@ exports.createPost = (req, res, next) => {
         }
 
         // 저장
-        const post = postModel.save(title, content, imageUrl, req.session.user.id);
+        const post = postModel.save(title, content, imageUrl, req.session.user.user_id);
 
         return res
             .status(201)
-            .json(functions.baseResponse(status.CREATED_IMAGE.message, {post_id: post.post_id}));
+            .json(functions.baseResponse(status.CREATED_POST.message, {post_id: post.post_id}));
     } catch (e) {
         next(e);
     }
@@ -68,11 +68,12 @@ exports.getPost = (req, res, next) => {
     try {
         const { post_id } = req.params;
         // 유효성 검사
-        if (validator.validateId(post_id)) {
+        if (!validator.validateId(post_id)) {
             return res
                 .status(400)
                 .json(functions.baseResponse(status.BAD_REQUEST.message));
         }
+
         const post = postModel.findById(post_id);
         if (!post) {
             return res
@@ -96,7 +97,7 @@ exports.updatePost = (req, res, next) => {
     try {
         const { post_id } = req.params;
         // Path Variable 유효성 검사
-        if (validator.validateId(post_id)) {
+        if (!validator.validateId(post_id)) {
             return res
                 .status(400)
                 .json(functions.baseResponse(status.BAD_REQUEST.message));
@@ -111,7 +112,7 @@ exports.updatePost = (req, res, next) => {
         }
 
         // 권한 검사
-        if (String(post.user_id) !== String(req.session.user.id)) {
+        if (String(post.user_id) !== String(req.session.user.user_id)) {
             return res
                 .status(403)
                 .json(functions.baseResponse(status.FORBIDDEN_POST.message))
@@ -138,11 +139,47 @@ exports.updatePost = (req, res, next) => {
             imageUrl = path.join('/image/users/', req.files.post_image[0].filename);
         }
 
-        const updatePost = postModel.update(post.post_id - 1, title, content, imageUrl);
+        const updatePost = postModel.update(post.post_id, title, content, imageUrl);
 
         return res
             .status(200)
             .json(functions.baseResponse(status.OK.message, {post_id: updatePost.post_id}));
+    } catch (e) {
+        next(e);
+    }
+}
+
+exports.deletePost = (req, res, next) => {
+    try {
+        const { post_id } = req.params;
+        // Path Variable 유효성 검사
+        if (!validator.validateId(post_id)) {
+            return res
+                .status(400)
+                .json(functions.baseResponse(status.BAD_REQUEST.message));
+        }
+
+        // 게시글 조회
+        const post = postModel.findById(post_id);
+        if (!post) {
+            return res
+                .status(404)
+                .json(functions.baseResponse(status.NOT_FOUND_POST.message))
+        }
+
+        // 권한 검사
+        if (String(post.user_id) !== String(req.session.user.user_id)) {
+            return res
+                .status(403)
+                .json(functions.baseResponse(status.FORBIDDEN_POST.message))
+        }
+
+        // TODO : 댓글 삭제
+        postModel.delete(post.post_id);
+
+        return res
+            .status(204)
+            .json(functions.baseResponse());
     } catch (e) {
         next(e);
     }

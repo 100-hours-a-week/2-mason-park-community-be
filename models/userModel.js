@@ -17,10 +17,10 @@ exports.findByEmail = (email) => {
     return users.find((user) => String(user.email) === String(email));
 };
 
-exports.findById = (id) => {
+exports.findById = (userId) => {
     const users = functions.readDB(PATH);
 
-    return users.find((user) => String(user.user_id) === String(id));
+    return users.find((user) => String(user.user_id) === String(userId));
 }
 
 exports.save = (email, password, nickname, profile_image) => {
@@ -40,13 +40,10 @@ exports.save = (email, password, nickname, profile_image) => {
     return user;
 }
 
-exports.update = (id, profile_image, nickname) => {
+exports.update = (userId, profile_image, nickname) => {
     const users = functions.readDB(PATH);
 
-    const targetIdx = users.findIndex((user) => String(user.user_id) === String(id));
-    if (targetIdx === -1) {
-        return null;
-    }
+    const targetIdx = users.findIndex((user) => String(user.user_id) === String(userId));
 
     users[targetIdx] = {
         ...users[targetIdx],
@@ -59,13 +56,10 @@ exports.update = (id, profile_image, nickname) => {
     return users[targetIdx];
 }
 
-exports.updatePassword = (id, password) => {
+exports.updatePassword = (userId, password) => {
     const users = functions.readDB(PATH);
 
-    const targetIdx = users.findIndex((user) => String(user.user_id) === String(id));
-    if (targetIdx === -1) {
-        return null;
-    }
+    const targetIdx = users.findIndex((user) => String(user.user_id) === String(userId));
 
     users[targetIdx] = {
         ...users[targetIdx],
@@ -77,19 +71,15 @@ exports.updatePassword = (id, password) => {
     return users[targetIdx];
 }
 
-exports.delete = (id) => {
+exports.delete = (userId) => {
     const users = functions.readDB(PATH);
 
-    const targetIdx = users.findIndex((user) => user.user_id === id);
-    if (targetIdx === -1) {
-        return false;
-    }
+    const targetIdx = users.findIndex((user) => String(user.user_id) === String(userId));
 
     // 회원 삭제
     users.splice(targetIdx, 1);
 
     functions.writeDB(PATH, users);
-    return true;
 }
 
 exports.existsEmail = (email) => {

@@ -59,23 +59,54 @@ exports.findAll = (offset, limit) => {
     ));
 }
 
-exports.findById = (id) => {
+exports.findById = (postId) => {
     const posts = functions.readDB(PATH);
 
-    return  posts.find((post) => String(post.post_id) === String(id));
+    const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
+    posts[targetIdx] = {
+        ...posts[targetIdx],
+        views: posts[targetIdx].views + 1,
+    }
+
+    return posts[targetIdx];
 }
 
-exports.update = (post_id, title, content, imageUrl) => {
+exports.update = (postId, title, content, imageUrl) => {
     const posts = functions.readDB(PATH);
 
-    posts[post_id] = {
-        ...posts[post_id],
-        title: title ? title : posts[post_id].title,
-        content: content ? content : posts[post_id].content,
-        post_image: imageUrl ? imageUrl : posts[post_id].post_image,
+    const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
+    posts[targetIdx] = {
+        ...posts[targetIdx],
+        title: title ? title : posts[targetIdx].title,
+        content: content ? content : posts[targetIdx].content,
+        post_image: imageUrl ? imageUrl : posts[targetIdx].post_image,
+        modified_at: moment().format('YYYY-MM-DD HH:mm:ss')
     }
 
     functions.writeDB(PATH, posts);
 
-    return posts[post_id];
+    return posts[targetIdx];
+}
+
+exports.incrementCommentCount = (postId) => {
+    const posts = functions.readDB(PATH);
+
+    const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
+    posts[targetIdx] = {
+        ...posts[targetIdx],
+        comments: posts[targetIdx].comments + 1,
+    }
+
+    functions.writeDB(PATH, posts);
+
+    return posts[targetIdx];
+}
+
+exports.delete = (postId) => {
+    const posts = functions.readDB(PATH);
+
+    const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
+    posts.splice(targetIdx, 1);
+
+    functions.writeDB(PATH, posts);
 }

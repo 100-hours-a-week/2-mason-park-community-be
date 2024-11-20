@@ -248,3 +248,4 @@ Temporary Items
 node_modules
 .env
 db/
+*.config.js

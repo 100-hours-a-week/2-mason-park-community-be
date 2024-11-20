@@ -3,7 +3,7 @@ const status = require('../utils/message');
 
 exports.isAuthenticated = (req, res, next) => {
     try {
-        if (!req.session || !req.session.id) {
+        if (!req.session || !req.session.user.is_authenticated) {
             return res
                 .status(401)
                 .json(functions.baseResponse(status.UNAUTHORIZED.message));

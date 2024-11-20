@@ -9,4 +9,5 @@ router.post('/', authenticator.isAuthenticated, uploader.fields([{ name: 'post_i
 router.get('/', postController.getPosts);
 router.get('/:post_id', postController.getPost);
 router.patch('/:post_id', authenticator.isAuthenticated, uploader.fields([{ name: 'post_image' }, { name: 'data' }]), postController.updatePost);
+router.delete('/:post_id', authenticator.isAuthenticated, postController.deletePost);
 module.exports = router;

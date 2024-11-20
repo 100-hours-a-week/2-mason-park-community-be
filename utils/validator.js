@@ -19,5 +19,5 @@ exports.validatePostTitle = title => {
 }
 
 exports.validateId = id => {
-    return !Number(id) || id <= 0;
+    return Number(id) && id > 0;
 }
