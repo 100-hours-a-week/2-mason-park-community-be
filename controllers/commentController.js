@@ -26,10 +26,10 @@ exports.createComment = async (req, res, next) => {
     }
 
     // 저장
-    const comment = commentModel.save(content, req.session.user.user_id, post_id);
+    const comment = await commentModel.save(content, req.session.user.user_id, post_id);
 
     // 댓글 수 올리기
-    postModel.incrementCommentCount(post_id);
+    await postModel.incrementCommentCount(post_id);
 
     return res
         .status(201)
@@ -45,22 +45,22 @@ exports.getComments = async (req, res, next) => {
         }
 
         // Post 유효성 검사
-        const post = postModel.findById(post_id);
+        const post = await postModel.findById(post_id);
 
         if (!post) {
-            throw  new NotFoundError(status.NOT_FOUND_POST.message);
+            throw new NotFoundError(status.NOT_FOUND_POST.message);
         }
 
-        const comments = commentModel.findAllByPostId(post_id);
+        const comments = await commentModel.findAllByPostId(post_id);
 
         return res
             .status(200)
             .json(response.base(
                 status.OK.message,
-                comments.map(comment => {
-                    const user = userModel.findById(comment.user_id);
+                await Promise.all(comments.map(async (comment) => {
+                    const user = await userModel.findById(comment.user_id);
                     return {...comment, user}
-                })))
+                }))))
 }
 
 exports.updateComment = async (req, res, next) => {
@@ -72,14 +72,14 @@ exports.updateComment = async (req, res, next) => {
     }
 
     // Post 유효성 검사
-    const post = postModel.findById(post_id);
+    const post = await postModel.findById(post_id);
 
     if (!post) {
         throw new NotFoundError(status.NOT_FOUND_POST.message);
     }
 
     // Comment 유효성 검사
-    const comment = commentModel.findById(comment_id);
+    const comment = await commentModel.findById(comment_id);
 
     if (!comment) {
         throw new NotFoundError(status.NOT_FOUND_COMMENT.message);
@@ -96,7 +96,7 @@ exports.updateComment = async (req, res, next) => {
         throw new ValidationError(status.BAD_REQUEST_COMMENT_CONTENT.message);
     }
 
-    const updateComment = commentModel.update(comment.comment_id, content);
+    const updateComment = await commentModel.update(comment.comment_id, content);
 
     return res
         .status(200)
@@ -112,14 +112,14 @@ exports.deleteComment = async (req, res, next) => {
     }
 
     // Post 유효성 검사
-    const post = postModel.findById(post_id);
+    const post = await postModel.findById(post_id);
 
     if (!post) {
         throw new NotFoundError(status.NOT_FOUND_POST.message);
     }
 
     // Comment 유효성 검사
-    const comment = commentModel.findById(comment_id);
+    const comment = await commentModel.findById(comment_id);
 
     if (!comment) {
         throw new NotFoundError(status.NOT_FOUND_COMMENT.message);
@@ -130,7 +130,7 @@ exports.deleteComment = async (req, res, next) => {
         throw new ForbiddenError(status.FORBIDDEN_COMMENT.message);
     }
 
-    commentModel.delete(comment.comment_id);
+    await commentModel.deleteById(comment.comment_id);
 
     return res
         .status(204)

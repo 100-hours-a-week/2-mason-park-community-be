@@ -20,7 +20,8 @@ exports.uploadProfileImage = async (req, res, next) => {
 }
 
 exports.getMyProfile = async (req, res, next) => {
-    const user = userModel.findById(req.session.user.user_id);
+    const user = await userModel.findById(req.session.user.user_id);
+
     if (!user) {
         throw new NotFoundError(status.NOT_FOUND_USER.message);
     }
@@ -46,12 +47,13 @@ exports.updateMyProfile = async (req, res, next) => {
     }
 
     // 유저 정보 수정
-    const user = userModel.findById(req.session.user.user_id);
+    const user = await userModel.findById(req.session.user.user_id);
+
     if(!user) {
         throw new NotFoundError(status.NOT_FOUND_USER.message);
     }
 
-    const updateUser = userModel.update(user.user_id, profile_image, nickname);
+    const updateUser = await userModel.update(user.user_id, profile_image, nickname);
 
     return res
         .status(200)
@@ -67,6 +69,7 @@ exports.updatePassword = async (req, res, next) => {
     }
 
     const decodedPassword = Buffer.from(password, "base64").toString("utf-8");
+
     if (!decodedPassword ||  !validator.validatePassword(decodedPassword)) {
         throw new ValidationError(status.BAD_REQUEST_PASSWORD.message);
     }
@@ -74,12 +77,13 @@ exports.updatePassword = async (req, res, next) => {
     // 유저 정보 수정
     const encryptedPassword = crypto.AES.encrypt(decodedPassword, process.env.CRYPTO_SECRET_KEY).toString();
 
-    const user = userModel.findById(req.session.user.user_id);
+    const user = await userModel.findById(req.session.user.user_id);
+
     if(!user) {
         throw new NotFoundError(status.NOT_FOUND_USER.message);
     }
 
-    const updateUser =  userModel.updatePassword(user.user_id, encryptedPassword);
+    const updateUser = await userModel.updatePassword(user.user_id, encryptedPassword);
 
     return res
         .status(200)
@@ -88,7 +92,7 @@ exports.updatePassword = async (req, res, next) => {
 
 exports.withdraw = async (req, res, next) => {
     // 유저 정보 삭제
-    const user = userModel.findById(req.session.user.user_id);
+    const user = await userModel.findById(req.session.user.user_id);
 
     if(!user) {
         throw new NotFoundError(status.NOT_FOUND_USER.message);
@@ -112,7 +116,7 @@ exports.withdraw = async (req, res, next) => {
         })
     })
 
-    userModel.delete(user.user_id);
+    await userModel.deleteById(user.user_id);
 
     return res
         .status(204);

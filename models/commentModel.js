@@ -12,8 +12,8 @@ function Comment (comment_id, content, created_at, modified_at, user_id, post_id
     this.post_id = post_id;
 }
 
-exports.save = (content, userId, postId) => {
-    const comments = functions.readDB(PATH);
+exports.save = async (content, userId, postId) => {
+    const comments = await functions.readDB(PATH);
 
     const comment = new Comment(
         comments.length + 1,
@@ -25,46 +25,46 @@ exports.save = (content, userId, postId) => {
     );
 
     comments.push(comment);
-    functions.writeDB(PATH, comments);
+    await functions.writeDB(PATH, comments);
 
     return comment;
 }
 
-exports.findById = (commentId) => {
-    const comments = functions.readDB(PATH);
+exports.findById = async (commentId) => {
+    const comments = await  functions.readDB(PATH);
 
     return comments
         .find(comment => String(comment.comment_id) === String(commentId));
 }
 
-exports.findAllByPostId = (postId) => {
-    const comments = functions.readDB(PATH);
+exports.findAllByPostId = async (postId) => {
+    const comments = await functions.readDB(PATH);
 
     return comments
         .filter(comment => String(comment.post_id) === String(postId))
         .sort((a, b) => a.id - b.id)
 }
 
-exports.update = (commentId, content) => {
-    const comments = functions.readDB(PATH);
+exports.update = async (commentId, content) => {
+    const comments = await functions.readDB(PATH);
 
     const targetIdx = comments
         .findIndex(comment => String(comment.comment_id) === String(commentId));
 
     comments[targetIdx].content = content ? content : comments[targetIdx].content;
 
-    functions.writeDB(PATH, comments);
+    await functions.writeDB(PATH, comments);
 
     return comments[targetIdx];
 }
 
-exports.delete = (commentId) => {
-    const comments = functions.readDB(PATH);
+exports.deleteById = async (commentId) => {
+    const comments = await functions.readDB(PATH);
 
     const targetIdx = comments
         .findIndex(comment => String(comment.comment_id) === String(commentId));
 
     comments.splice(targetIdx, 1);
 
-    functions.writeDB(PATH, comments);
+    await functions.writeDB(PATH, comments);
 }

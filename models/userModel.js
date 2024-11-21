@@ -11,20 +11,20 @@ function User (user_id, email, password, nickname, profile_image) {
     this.profile_image = profile_image;
 }
 
-exports.findByEmail = (email) => {
-    const users = functions.readDB(PATH);
+exports.findByEmail = async (email) => {
+    const users = await functions.readDB(PATH);
 
     return users.find((user) => String(user.email) === String(email));
 };
 
-exports.findById = (userId) => {
-    const users = functions.readDB(PATH);
+exports.findById = async (userId) => {
+    const users = await functions.readDB(PATH);
 
     return users.find((user) => String(user.user_id) === String(userId));
 }
 
-exports.save = (email, password, nickname, profile_image) => {
-    const users = functions.readDB(PATH);
+exports.save = async (email, password, nickname, profile_image) => {
+    const users = await functions.readDB(PATH);
 
     const user = new User(
         users.length + 1,
@@ -35,13 +35,13 @@ exports.save = (email, password, nickname, profile_image) => {
     );
 
     users.push(user);
-    functions.writeDB(PATH, users);
+    await functions.writeDB(PATH, users);
 
     return user;
 }
 
-exports.update = (userId, profile_image, nickname) => {
-    const users = functions.readDB(PATH);
+exports.update = async (userId, profile_image, nickname) => {
+    const users = await functions.readDB(PATH);
 
     const targetIdx = users.findIndex((user) => String(user.user_id) === String(userId));
 
@@ -51,13 +51,13 @@ exports.update = (userId, profile_image, nickname) => {
         nickname: nickname ? nickname : users[targetIdx].nickname,
     };
 
-    functions.writeDB(PATH, users);
+    await functions.writeDB(PATH, users);
 
     return users[targetIdx];
 }
 
-exports.updatePassword = (userId, password) => {
-    const users = functions.readDB(PATH);
+exports.updatePassword = async (userId, password) => {
+    const users = await functions.readDB(PATH);
 
     const targetIdx = users.findIndex((user) => String(user.user_id) === String(userId));
 
@@ -66,12 +66,12 @@ exports.updatePassword = (userId, password) => {
         password: password ? password : users[targetIdx].password,
     };
 
-    functions.writeDB(PATH, users);
+    await functions.writeDB(PATH, users);
 
     return users[targetIdx];
 }
 
-exports.delete = (userId) => {
+exports.deleteById = async (userId) => {
     const users = functions.readDB(PATH);
 
     const targetIdx = users.findIndex((user) => String(user.user_id) === String(userId));
@@ -79,17 +79,17 @@ exports.delete = (userId) => {
     // 회원 삭제
     users.splice(targetIdx, 1);
 
-    functions.writeDB(PATH, users);
+    await functions.writeDB(PATH, users);
 }
 
-exports.existsEmail = (email) => {
-    const users = functions.readDB(PATH);
+exports.existsEmail = async (email) => {
+    const users = await functions.readDB(PATH);
 
     return users.findIndex((user) => user.email === email) !== -1;
 }
 
-exports.existsNickname = (nickname) => {
-    const users = functions.readDB(PATH);
+exports.existsNickname = async (nickname) => {
+    const users = await functions.readDB(PATH);
 
     return users.findIndex((user) => user.nickname === nickname) !== -1;
 }

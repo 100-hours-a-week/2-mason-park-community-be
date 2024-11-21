@@ -32,7 +32,7 @@ const uploader = multer({
         if (allowedExtensions.includes(extension)) {
             cb(null, true); // 통과
         } else {
-            cb(new Error('허용되지 않은 파일 형식입니다.'), false); // 거부
+            cb(new ValidationError('허용되지 않은 파일 형식입니다.'), false); // 거부
         }
     }
 })

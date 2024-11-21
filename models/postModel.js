@@ -1,5 +1,6 @@
 const path = require('path');
 const functions = require('../utils/functions');
+const response = require('../utils/response');
 const moment = require('moment');
 const PATH = path.join(__dirname, process.env.DB_PATH_POST);
 
@@ -16,8 +17,8 @@ function Post (post_id, title, content, thumbs, views, comments, post_image, cre
     this.user_id = user_id;
 }
 
-exports.save = (title, content, post_image=null, user_id) => {
-    const posts = functions.readDB(PATH);
+exports.save = async (title, content, post_image=null, user_id) => {
+    const posts = await functions.readDB(PATH);
 
     const post = new Post(
         posts.length + 1,
@@ -33,15 +34,16 @@ exports.save = (title, content, post_image=null, user_id) => {
     );
 
     posts.push(post);
-    functions.writeDB(PATH, posts);
+    await functions.writeDB(PATH, posts);
 
     return post;
 }
 
-exports.findAll = (offset, limit) => {
-    const posts = functions.readDB(PATH);
+exports.findAll = async (offset, limit) => {
+    const posts = await functions.readDB(PATH);
 
-    return functions.page(
+    return response.page(
+        '',
         offset,
         limit,
         posts.length,
@@ -59,8 +61,8 @@ exports.findAll = (offset, limit) => {
     ));
 }
 
-exports.findById = (postId) => {
-    const posts = functions.readDB(PATH);
+exports.findById = async (postId) => {
+    const posts = await functions.readDB(PATH);
 
     const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
     posts[targetIdx] = {
@@ -71,8 +73,8 @@ exports.findById = (postId) => {
     return posts[targetIdx];
 }
 
-exports.update = (postId, title, content, imageUrl) => {
-    const posts = functions.readDB(PATH);
+exports.update = async (postId, title, content, imageUrl) => {
+    const posts = await functions.readDB(PATH);
 
     const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
     posts[targetIdx] = {
@@ -83,13 +85,13 @@ exports.update = (postId, title, content, imageUrl) => {
         modified_at: moment().format('YYYY-MM-DD HH:mm:ss')
     }
 
-    functions.writeDB(PATH, posts);
+    await functions.writeDB(PATH, posts);
 
     return posts[targetIdx];
 }
 
-exports.incrementCommentCount = (postId) => {
-    const posts = functions.readDB(PATH);
+exports.incrementCommentCount = async (postId) => {
+    const posts = await functions.readDB(PATH);
 
     const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
     posts[targetIdx] = {
@@ -97,16 +99,16 @@ exports.incrementCommentCount = (postId) => {
         comments: posts[targetIdx].comments + 1,
     }
 
-    functions.writeDB(PATH, posts);
+    await  functions.writeDB(PATH, posts);
 
     return posts[targetIdx];
 }
 
-exports.delete = (postId) => {
+exports.deleteById = async (postId) => {
     const posts = functions.readDB(PATH);
 
     const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
     posts.splice(targetIdx, 1);
 
-    functions.writeDB(PATH, posts);
+    await functions.writeDB(PATH, posts);
 }

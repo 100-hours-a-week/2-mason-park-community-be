@@ -22,12 +22,14 @@ exports.login = async (req, res, next) => {
         throw new ValidationError(status.BAD_REQUEST_PASSWORD.message);
     }
 
-    const user = userModel.findByEmail(email);
+    const user = await userModel.findByEmail(email);
+
     if (!user) {
         throw new NotFoundError(status.NOT_FOUND_USER.message);
     }
 
     const decryptedPassword = crypto.AES.decrypt(user.password, process.env.CRYPTO_SECRET_KEY);
+
     if (decryptedPassword.toString(crypto.enc.Utf8) !== decodedPassword) {
         throw new UnauthorizedError(status.UNAUTHORIZED.message);
     }
@@ -56,19 +58,18 @@ exports.logout = async (req, res, next) => {
             next(new InternalServerError(status.INTERNAL_SERVER_ERROR_SESSION_DESTROY.message));
         }
 
-        // 쿠키 제거
-        res.clearCookie('session_id', {
-            httpOnly: true,
-            secure: false,
-            path: '/',
-            maxAge: 0
-        });
-        res.clearCookie('user_id', {
-            httpOnly: true,
-            secure: false,
-            path: '/',
-            maxAge: 0
-        });
+    });
+
+    // 쿠키 제거
+    res.clearCookie('session_id', {
+        httpOnly: true,
+        secure: false,
+        path: '/',
+    });
+    res.clearCookie('user_id', {
+        httpOnly: true,
+        secure: false,
+        path: '/',
     });
 
     return res
@@ -99,18 +100,18 @@ exports.register = async (req, res, next) => {
     }
 
     // 중복 검사
-    if (userModel.existsEmail(email)) {
+    if (await userModel.existsEmail(email)) {
         throw new ConflictError(status.CONFLICT_EMAIL.message);
     }
 
-    if (userModel.existsNickname(nickname)) {
+    if (await userModel.existsNickname(nickname)) {
         throw new ConflictError(status.CONFLICT_NICKNAME.message);
     }
 
     // 패스워드 암호화
     const encryptedPassword = crypto.AES.encrypt(decodedPassword, process.env.CRYPTO_SECRET_KEY).toString();
 
-    const user = userModel.save(
+    const user = await userModel.save(
         email,
         encryptedPassword,
         nickname,
@@ -125,7 +126,7 @@ exports.register = async (req, res, next) => {
 exports.existsEmail = async (req, res, next) => {
     const { email } = req.query;
 
-    if (userModel.existsEmail(email)) {
+    if (await userModel.existsEmail(email)) {
         throw new ConflictError(status.CONFLICT_EMAIL.message);
     }
 
@@ -137,7 +138,7 @@ exports.existsEmail = async (req, res, next) => {
 exports.existsNickname = async (req, res, next) => {
     const { nickname } = req.query
 
-    if (userModel.existsNickname(nickname)) {
+    if (await userModel.existsNickname(nickname)) {
         throw new ConflictError(status.CONFLICT_NICKNAME.message);
     }
 

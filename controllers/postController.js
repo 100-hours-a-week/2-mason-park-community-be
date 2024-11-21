@@ -26,7 +26,7 @@ exports.createPost = async (req, res, next) => {
     }
 
     // 저장
-    const post = postModel.save(title, content, imageUrl, req.session.user.user_id);
+    const post = await postModel.save(title, content, imageUrl, req.session.user.user_id);
 
     return res
         .status(201)
@@ -41,7 +41,7 @@ exports.getPosts = async (req, res, next) => {
         throw new ValidationError(status.BAD_REQUEST_OFFSET_LIMIT.message);
     }
 
-    const pagedPosts = postModel.findAll(offset, limit);
+    const pagedPosts = await postModel.findAll(offset, limit);
 
     return res
         .status(200)
@@ -50,10 +50,10 @@ exports.getPosts = async (req, res, next) => {
             pagedPosts.offset,
             pagedPosts.limit,
             pagedPosts.total,
-            pagedPosts.data.map((post) => {
-                const user = userModel.findById(post.user_id);
+            await Promise.all(pagedPosts.data.map(async (post) => {
+                const user = await userModel.findById(post.user_id);
                 return {...post, user};
-            }))
+            })))
         );
 }
 
@@ -64,12 +64,13 @@ exports.getPost = async (req, res, next) => {
         throw new ValidationError(status.BAD_REQUEST_ID.message);
     }
 
-    const post = postModel.findById(post_id);
+    const post = await postModel.findById(post_id);
+
     if (!post) {
         throw new ValidationError(status.NOT_FOUND_POST.message);
     }
 
-    const user = userModel.findById(post.user_id);
+    const user = await userModel.findById(post.user_id);
 
     return res
         .status(200)
@@ -80,13 +81,14 @@ exports.getPost = async (req, res, next) => {
 
 exports.updatePost = async (req, res, next) => {
     const { post_id } = req.params;
+
     // Path Variable 유효성 검사
     if (!validator.validateId(post_id)) {
         throw new ValidationError(status.BAD_REQUEST_ID.message);
     }
 
     // 게시글 조회
-    const post = postModel.findById(post_id);
+    const post = await postModel.findById(post_id);
     if (!post) {
         throw new NotFoundError(status.NOT_FOUND_POST.message);
     }
@@ -115,7 +117,7 @@ exports.updatePost = async (req, res, next) => {
         imageUrl = path.join('/image/users/', req.files.post_image[0].filename);
     }
 
-    const updatePost = postModel.update(post.post_id, title, content, imageUrl);
+    const updatePost = await postModel.update(post.post_id, title, content, imageUrl);
 
     return res
         .status(200)
@@ -131,7 +133,8 @@ exports.deletePost = async (req, res, next) => {
     }
 
     // 게시글 조회
-    const post = postModel.findById(post_id);
+    const post = await postModel.findById(post_id);
+
     if (!post) {
         throw new NotFoundError(status.NOT_FOUND_POST.message);
     }
@@ -142,7 +145,7 @@ exports.deletePost = async (req, res, next) => {
     }
 
     // TODO : 댓글 삭제
-    postModel.delete(post.post_id);
+    await postModel.deleteById(post.post_id);
 
     return res
         .status(204);
