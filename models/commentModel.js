@@ -57,3 +57,14 @@ exports.update = (commentId, content) => {
 
     return comments[targetIdx];
 }
+
+exports.delete = (commentId) => {
+    const comments = functions.readDB(PATH);
+
+    const targetIdx = comments
+        .findIndex(comment => String(comment.comment_id) === String(commentId));
+
+    comments.splice(targetIdx, 1);
+
+    functions.writeDB(PATH, comments);
+}

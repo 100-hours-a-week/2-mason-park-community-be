@@ -7,4 +7,5 @@ const commentController = require('../controllers/commentController');
 router.post('/comments', authenticator.isAuthenticated, commentController.createComment);
 router.get('/comments', commentController.getComments);
 router.patch('/comments/:comment_id', authenticator.isAuthenticated, commentController.updateComment);
+router.delete('/comments/:comment_id', authenticator.isAuthenticated, commentController.deleteComment);
 module.exports = router;

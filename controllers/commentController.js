@@ -132,3 +132,47 @@ exports.updateComment = (req, res, next) => {
         next(e);
     }
 }
+
+exports.deleteComment = (req, res, next) => {
+    try {
+        // Path Variable 유효성 검사
+        const { post_id, comment_id } = req.params;
+
+        if (!validator.validateId(post_id) || !validator.validateId(comment_id)) {
+            return res
+                .status(400)
+                .json(functions.baseResponse(status.BAD_REQUEST.message));
+        }
+
+        // Post 유효성 검사
+        const post = postModel.findById(post_id);
+        if (!post) {
+            return res
+                .status(404)
+                .json(functions.baseResponse(status.NOT_FOUND_POST.message));
+        }
+
+        // Comment 유효성 검사
+        const comment = commentModel.findById(comment_id);
+        if (!comment) {
+            return res
+                .status(404)
+                .json(functions.baseResponse(status.NOT_FOUND_COMMENT.message));
+        }
+
+        // 권한 검사
+        if (String(comment.user_id) !== String(req.session.user.user_id)) {
+            return res
+                .status(403)
+                .json(functions.baseResponse(status.FORBIDDEN_COMMENT.message))
+        }
+
+        commentModel.delete(comment.comment_id);
+
+        return res
+            .status(204)
+            .json()
+    } catch (e) {
+        next(e);
+    }
+}
