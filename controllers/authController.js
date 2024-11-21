@@ -1,179 +1,147 @@
 const userModel = require('../models/userModel');
-const functions = require("../utils/functions");
 const validator = require("../utils/validator");
+const response = require('../utils/response');
 const crypto = require("crypto-js");
 const status = require("../utils/message");
 
-exports.login = (req, res, next) => {
-    try {
-        const { email, password } = req.body;
-        const decodedPassword = Buffer.from(password, "base64").toString("utf-8");
+exports.login = async (req, res, next) => {
 
-        const isValid = (
-            email && validator.validateEmail(email)
-            && decodedPassword && validator.validatePassword(decodedPassword)
-        );
+    const { email, password } = req.body;
 
-        if (!isValid) {
-            return res
-                .status(400)
-                .json(functions.baseResponse(status.BAD_REQUEST.message))
+    if (!email || !validator.validateEmail(email)) {
+        throw new ValidationError(status.BAD_REQUEST_EMAIL.message);
+    }
+
+    if (!password) {
+        throw new ValidationError(status.BAD_REQUEST_PASSWORD.message);
+    }
+
+    const decodedPassword = Buffer.from(password, "base64").toString("utf-8");
+
+    if (!validator.validatePassword(decodedPassword)) {
+        throw new ValidationError(status.BAD_REQUEST_PASSWORD.message);
+    }
+
+    const user = userModel.findByEmail(email);
+    if (!user) {
+        throw new NotFoundError(status.NOT_FOUND_USER.message);
+    }
+
+    const decryptedPassword = crypto.AES.decrypt(user.password, process.env.CRYPTO_SECRET_KEY);
+    if (decryptedPassword.toString(crypto.enc.Utf8) !== decodedPassword) {
+        throw new UnauthorizedError(status.UNAUTHORIZED.message);
+    }
+
+    // 로그인 성공 세션 저장 및 쿠키 설정
+    req.session.user = {
+        user_id: user.user_id,
+        is_authenticated: true
+    };
+
+    res.cookie('user_id', user.user_id, {
+        httpOnly: true,
+        secure: false,
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return res
+        .status(200)
+        .json(response.base(status.OK.message));
+}
+
+exports.logout = async (req, res, next) => {
+    // 세션 제거
+    req.session.destroy((err) => {
+        if (err) {
+            next(new InternalServerError(status.INTERNAL_SERVER_ERROR_SESSION_DESTROY.message));
         }
 
-        const user = userModel.findByEmail(email);
-        if (!user) {
-            return res
-                .status(404)
-                .json(functions.baseResponse(status.NOT_FOUND_USER.message))
-        }
-
-        const decryptedPassword = crypto.AES.decrypt(user.password, process.env.CRYPTO_SECRET_KEY);
-        if (decryptedPassword.toString(crypto.enc.Utf8) !== decodedPassword) {
-            return res
-                .status(401)
-                .json(functions.baseResponse(status.UNAUTHORIZED.message));
-        }
-
-        // 로그인 성공 세션 저장 및 쿠키 설정
-        req.session.user = {
-            user_id: user.user_id,
-            is_authenticated: true
-        };
-
-        res.cookie('user_id', user.user_id, {
+        // 쿠키 제거
+        res.clearCookie('session_id', {
             httpOnly: true,
             secure: false,
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            path: '/',
+            maxAge: 0
         });
-
-        req.session.save((err) => {
-            if (err) {
-                return res
-                    .status(500)
-                    .json(functions.baseResponse(status.INTERNAL_SERVER_ERROR.message));
-            }
-            return res
-                .status(200)
-                .json(functions.baseResponse(status.OK.message));
+        res.clearCookie('user_id', {
+            httpOnly: true,
+            secure: false,
+            path: '/',
+            maxAge: 0
         });
-    } catch (e) {
-        next(e);
-    }
+    });
+
+    return res
+        .status(200)
+        .json(response.base(status.OK.message));
 }
 
-exports.logout = (req, res, next) => {
-    try {
-        // 세션 제거
-        req.session.destroy((err) => {
-            if (err) {
-                return res
-                    .status(500)
-                    .json(functions.baseResponse(status.INTERNAL_SERVER_ERROR.message));
-            }
+exports.register = async (req, res, next) => {
+    const { email, password, nickname, profile_image } = req.body;
 
-            // 쿠키 제거
-            res.clearCookie('session_id', {
-                httpOnly: true,
-                secure: false,
-                path: '/',
-                maxAge: 0
-            });
-            res.clearCookie('user_id', {
-                httpOnly: true,
-                secure: false,
-                path: '/',
-                maxAge: 0
-            });
-        });
-
-        return res
-            .status(200)
-            .json(functions.baseResponse(status.OK.message));
-    } catch (e) {
-        next(e);
+    // 유효성 검사
+    if (!email || !validator.validateEmail(email)) {
+        throw new ValidationError(status.BAD_REQUEST_EMAIL.message);
     }
+
+    if (!password) {
+        throw new ValidationError(status.BAD_REQUEST_PASSWORD.message);
+    }
+
+    const decodedPassword = Buffer.from(password, "base64").toString("utf-8");
+
+    if (!validator.validatePassword(decodedPassword)) {
+        throw new ValidationError(status.BAD_REQUEST_PASSWORD.message);
+    }
+
+    if (!nickname || !validator.validateNickname(nickname)) {
+        throw new ValidationError(status.BAD_REQUEST_PASSWORD.message);
+    }
+
+    // 중복 검사
+    if (userModel.existsEmail(email)) {
+        throw new ConflictError(status.CONFLICT_EMAIL.message);
+    }
+
+    if (userModel.existsNickname(nickname)) {
+        throw new ConflictError(status.CONFLICT_NICKNAME.message);
+    }
+
+    // 패스워드 암호화
+    const encryptedPassword = crypto.AES.encrypt(decodedPassword, process.env.CRYPTO_SECRET_KEY).toString();
+
+    const user = userModel.save(
+        email,
+        encryptedPassword,
+        nickname,
+        profile_image
+    );
+
+    return res
+        .status(201)
+        .json(response.base(status.CREATED_USER.message, {user_id: user.id}));
 }
 
-exports.register = (req, res, next) => {
-    try {
-        const { email, password, nickname, profile_image } = req.body;
-        const decodedPassword = Buffer.from(password, "base64").toString("utf-8");
+exports.existsEmail = async (req, res, next) => {
+    const { email } = req.query;
 
-        // 유효성 검사
-        const isValid = (
-            email && validator.validateEmail(email)
-            && decodedPassword && validator.validatePassword(decodedPassword)
-            && nickname && validator.validateNickname(nickname)
-        );
-
-        if (!isValid) {
-            return res
-                .status(400)
-                .json(functions.baseResponse(status.BAD_REQUEST.message));
-        }
-
-        // 이메일 중복 검사
-        if (userModel.existsEmail(email)) {
-            return res
-                .status(409)
-                .json(functions.baseResponse(status.CONFLICT_EMAIL.message));
-        }
-
-        // 닉네임 중복 검사
-        if (userModel.existsNickname(nickname)) {
-            return res
-                .status(409)
-                .json(functions.baseResponse(status.CONFLICT_NICKNAME.message));
-        }
-
-        // 패스워드 암호화
-        const encryptedPassword = crypto.AES.encrypt(decodedPassword, process.env.CRYPTO_SECRET_KEY).toString();
-
-        const user = userModel.save(
-            email,
-            encryptedPassword,
-            nickname,
-            profile_image
-        );
-
-        return res
-            .status(201)
-            .json(functions.baseResponse(status.CREATED_USER.message, {user_id: user.id}));
-    } catch (e) {
-        next(e);
+    if (userModel.existsEmail(email)) {
+        throw new ConflictError(status.CONFLICT_EMAIL.message);
     }
+
+    return res
+        .status(200)
+        .json(response.base(status.OK.message));
 }
 
-exports.existsEmail = (req, res, next) => {
-    try {
-        const { email } = req.query;
+exports.existsNickname = async (req, res, next) => {
+    const { nickname } = req.query
 
-        if (userModel.existsEmail(email)) {
-            return res
-                .status(409)
-                .json(functions.baseResponse(status.CONFLICT_EMAIL.message));
-        }
-        return res
-            .status(200)
-            .json(functions.baseResponse(status.OK.message));
-    } catch (e) {
-        next(e);
+    if (userModel.existsNickname(nickname)) {
+        throw new ConflictError(status.CONFLICT_NICKNAME.message);
     }
-}
 
-exports.existsNickname = (req, res, next) => {
-    try {
-        const { nickname } = req.query
-
-        if (userModel.existsNickname(nickname)) {
-            return res
-                .status(409)
-                .json(functions.baseResponse(status.CONFLICT_NICKNAME.message));
-        }
-        return res
-            .status(200)
-            .json(functions.baseResponse(status.OK.message));
-    } catch (e) {
-        next(e);
-    }
+    return res
+        .status(200)
+        .json(response.base(status.OK.message));
 }

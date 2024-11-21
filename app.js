@@ -3,7 +3,7 @@ require('express-async-errors')
 const morgan = require('morgan');
 const session = require('express-session');
 const cors = require('cors');
-const status = require('./utils/message');
+const { errorHandler } = require("./middlewares/errorHandlingMiddleware");
 const app = express();
 
 // == Middleware 설정 ==
@@ -34,10 +34,7 @@ app.use(session({
 }));
 
 // 에러 핸들링
-app.use('/api', (err, req, res, next) => {
-    // 에러 응답 전송
-    res.status(500).json({ message: status.INTERNAL_SERVER_ERROR.message , error: err});
-});
+app.use('/api', errorHandler);
 
 // Route 설정
 const router = require('./routes/index');

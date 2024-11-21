@@ -21,8 +21,35 @@ const status = {
     "BAD_REQUEST": {
         "message" : "잘못된 요청입니다. 입력값을 확인해주세요."
     },
+    "BAD_REQUEST_EMAIL": {
+        "message" : "이메일 유효성 검증에 실패했습니다."
+    },
+    "BAD_REQUEST_PASSWORD": {
+        "message" : "비밀번호 유효성 검증에 실패했습니다."
+    },
+    "BAD_REQUEST_NICKNAME": {
+        "message" : "닉네임 유효성 검증에 실패했습니다."
+    },
+    "BAD_REQUEST_IMAGE_URL": {
+        "message" : "이미지 URL 유효성 검증에 실패했습니다."
+    },
     "BAD_REQUEST_IMAGE": {
         "message" : "잘못된 요청입니다. 이미지 파일을 확인해주세요."
+    },
+    "BAD_REQUEST_POST_TITLE": {
+        "message" : "게시글 제목 유효성 검증에 실패했습니다."
+    },
+    "BAD_REQUEST_POST_CONTENT": {
+        "message" : "게시글 내용 유효성 검증에 실패했습니다."
+    },
+    "BAD_REQUEST_COMMENT_CONTENT": {
+        "message" : "댓글 내용 유효성 검증에 실패했습니다."
+    },
+    "BAD_REQUEST_OFFSET_LIMIT": {
+        "message" : "offset/limit 유효성 검증에 실패했습니다."
+    },
+    "BAD_REQUEST_ID": {
+        "message" : "ID 유효성 검증에 실패했습니다."
     },
     "UNAUTHORIZED": {
         "message" : "인증되지 않은 사용자입니다."
@@ -51,6 +78,9 @@ const status = {
 
     /* ---- 500 ---- */
     "INTERNAL_SERVER_ERROR": {
+        "message" : "일시적인 오류가 발생했습니다."
+    },
+    "INTERNAL_SERVER_ERROR_SESSION_DESTROY": {
         "message" : "일시적인 오류가 발생했습니다."
     },
 }
