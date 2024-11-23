@@ -4,6 +4,7 @@ const commentModel = require('../models/commentModel');
 const response = require("../utils/response");
 const validator = require('../utils/validator');
 const status = require('../utils/message');
+const {ValidationError, NotFoundError, ForbiddenError} = require("../utils/error");
 
 exports.createComment = async (req, res, next) => {
     // Path Variable 유효성 검사
@@ -130,8 +131,10 @@ exports.deleteComment = async (req, res, next) => {
         throw new ForbiddenError(status.FORBIDDEN_COMMENT.message);
     }
 
+    await postModel.decrementCommentCount(post_id);
     await commentModel.deleteById(comment.comment_id);
 
     return res
         .status(204)
+        .send();
 }

@@ -41,3 +41,13 @@ class InternalServerError extends CustomError {
         super(message, 500);
     }
 }
+
+module.exports = {
+    CustomError,
+    ValidationError,
+    UnauthorizedError,
+    ForbiddenError,
+    NotFoundError,
+    ConflictError,
+    InternalServerError,
+}

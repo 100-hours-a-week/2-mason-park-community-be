@@ -1,6 +1,7 @@
 const path = require('path');
 const functions = require('../utils/functions');
 const moment = require('moment');
+const {generateId} = require("./IDGenerator");
 const PATH = path.join(__dirname, process.env.DB_PATH_COMMENT);
 
 function Comment (comment_id, content, created_at, modified_at, user_id, post_id) {
@@ -16,7 +17,7 @@ exports.save = async (content, userId, postId) => {
     const comments = await functions.readDB(PATH);
 
     const comment = new Comment(
-        comments.length + 1,
+        generateId('comments'),
         content,
         moment().format('YYYY-MM-DD HH:mm:ss'),
         moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -51,8 +52,11 @@ exports.update = async (commentId, content) => {
     const targetIdx = comments
         .findIndex(comment => String(comment.comment_id) === String(commentId));
 
-    comments[targetIdx].content = content ? content : comments[targetIdx].content;
-
+    comments[targetIdx] = {
+        ...comments[targetIdx],
+        content: content ? content : comments[targetIdx].content,
+        modified_at: moment().format('YYYY-MM-DD HH:mm:ss'),
+    }
     await functions.writeDB(PATH, comments);
 
     return comments[targetIdx];
@@ -67,4 +71,22 @@ exports.deleteById = async (commentId) => {
     comments.splice(targetIdx, 1);
 
     await functions.writeDB(PATH, comments);
+}
+
+exports.deleteAllByPostId = async (postId) => {
+    const comments = await functions.readDB(PATH);
+
+    const filteredComments = comments
+        .filter(comment => String(comment.post_id) !== String(postId))
+
+    await functions.writeDB(PATH, filteredComments);
+}
+
+exports.deleteAllByUserId = async (userId) => {
+    const comments = await functions.readDB(PATH);
+
+    const filteredComments = comments
+        .filter(comment => String(comment.user_id) !== String(userId))
+
+    await functions.writeDB(PATH, filteredComments);
 }

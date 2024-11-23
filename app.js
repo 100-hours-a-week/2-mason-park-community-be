@@ -1,6 +1,6 @@
 const express = require('express');
 require('express-async-errors')
-const morgan = require('morgan');
+const logger = require('./middlewares/loggingMiddleware');
 const session = require('express-session');
 const cors = require('cors');
 const { errorHandler } = require("./middlewares/errorHandlingMiddleware");
@@ -12,7 +12,7 @@ const app = express();
 app.use(express.json());
 
 // 로깅
-app.use(morgan('dev'));
+app.use(logger);
 
 // CORS
 app.use(cors({
@@ -33,11 +33,12 @@ app.use(session({
     name: 'session_id' // 세션 쿠키 이름
 }));
 
-// 에러 핸들링
-app.use('/api', errorHandler);
 
 // Route 설정
 const router = require('./routes/index');
 app.use('/api', router);
+
+// 에러 핸들링
+app.use('/api', errorHandler);
 
 module.exports = app;

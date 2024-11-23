@@ -1,14 +1,17 @@
 const path = require('path');
 const functions = require('../utils/functions');
-
+const moment = require('moment');
+const {generateId} = require("./IDGenerator");
 const PATH = path.join(__dirname, process.env.DB_PATH_USER);
 
-function User (user_id, email, password, nickname, profile_image) {
+function User (user_id, email, password, nickname, profile_image, created_at, modified_at) {
     this.user_id = user_id;
     this.email = email;
     this.password = password;
     this.nickname = nickname;
     this.profile_image = profile_image;
+    this.created_at = created_at;
+    this.modified_at = modified_at;
 }
 
 exports.findByEmail = async (email) => {
@@ -27,11 +30,13 @@ exports.save = async (email, password, nickname, profile_image) => {
     const users = await functions.readDB(PATH);
 
     const user = new User(
-        users.length + 1,
+        generateId('users'),
         email,
         password,
         nickname,
-        profile_image
+        profile_image,
+        moment().format('YYYY-MM-DD HH:mm:ss'),
+        moment().format('YYYY-MM-DD HH:mm:ss'),
     );
 
     users.push(user);
@@ -49,6 +54,7 @@ exports.update = async (userId, profile_image, nickname) => {
         ...users[targetIdx],
         profile_image: profile_image ? profile_image : users[targetIdx].profile_image,
         nickname: nickname ? nickname : users[targetIdx].nickname,
+        modified_at: moment().format('YYYY-MM-DD HH:mm:ss'),
     };
 
     await functions.writeDB(PATH, users);
@@ -64,6 +70,7 @@ exports.updatePassword = async (userId, password) => {
     users[targetIdx] = {
         ...users[targetIdx],
         password: password ? password : users[targetIdx].password,
+        modified_at: moment().format('YYYY-MM-DD HH:mm:ss'),
     };
 
     await functions.writeDB(PATH, users);

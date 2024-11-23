@@ -3,6 +3,7 @@ const validator = require("../utils/validator");
 const response = require('../utils/response');
 const crypto = require("crypto-js");
 const status = require("../utils/message");
+const {ValidationError, NotFoundError, UnauthorizedError, InternalServerError, ConflictError} = require("../utils/error");
 
 exports.login = async (req, res, next) => {
 
@@ -96,7 +97,7 @@ exports.register = async (req, res, next) => {
     }
 
     if (!nickname || !validator.validateNickname(nickname)) {
-        throw new ValidationError(status.BAD_REQUEST_PASSWORD.message);
+        throw new ValidationError(status.BAD_REQUEST_NICKNAME.message);
     }
 
     // 중복 검사

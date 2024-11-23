@@ -1,10 +1,12 @@
 const userModel = require('../models/userModel');
 const postModel = require('../models/postModel');
+const commentModel = require('../models/commentModel');
 const response = require("../utils/response");
 const validator = require('../utils/validator');
 const status = require('../utils/message');
 const path = require('path');
 const fs = require('fs');
+const {ValidationError, NotFoundError, ForbiddenError} = require("../utils/error");
 
 exports.createPost = async (req, res, next) => {
     const blob = req.files?.data?.[0] || null;
@@ -72,10 +74,17 @@ exports.getPost = async (req, res, next) => {
 
     const user = await userModel.findById(post.user_id);
 
+    const { comment } = req.query;
+    // 유효성 검사
+    let comments;
+    if (comments && comment.toUpperCase() === 'Y') {
+        comments = await commentModel.findAllByPostId(post_id);
+    }
+
     return res
         .status(200)
         .json(response.base(status.OK.message, {
-            ...post, user
+            ...post, user, comments
         }));
 }
 
@@ -144,9 +153,10 @@ exports.deletePost = async (req, res, next) => {
         throw new ForbiddenError(status.FORBIDDEN_POST.message);
     }
 
-    // TODO : 댓글 삭제
+    await commentModel.deleteAllByPostId(post.post_id);
     await postModel.deleteById(post.post_id);
 
     return res
-        .status(204);
+        .status(204)
+        .send();
 }

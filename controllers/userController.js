@@ -1,9 +1,12 @@
 const userModel = require('../models/userModel');
+const postModel = require('../models/postModel');
+const commentModel = require('../models/commentModel');
 const path = require('path');
 const validator = require("../utils/validator");
 const crypto = require("crypto-js");
 const status = require('../utils/message');
 const response = require('../utils/response');
+const {InternalServerError, NotFoundError, ValidationError} = require("../utils/error");
 
 exports.uploadProfileImage = async (req, res, next) => {
     if (!req.file) {
@@ -116,9 +119,12 @@ exports.withdraw = async (req, res, next) => {
         })
     })
 
+    await commentModel.deleteAllByUserId(user.user_id);
+    await postModel.deleteAllByUserId(user.user_id);
     await userModel.deleteById(user.user_id);
 
     return res
-        .status(204);
+        .status(204)
+        .send();
 }
 
