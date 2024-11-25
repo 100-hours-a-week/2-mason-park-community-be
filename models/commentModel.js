@@ -43,7 +43,7 @@ exports.findAllByPostId = async (postId) => {
 
     return comments
         .filter(comment => String(comment.post_id) === String(postId))
-        .sort((a, b) => a.id - b.id)
+        .sort((a, b) => Number(a.comment_id) - Number(b.comment_id));
 }
 
 exports.update = async (commentId, content) => {

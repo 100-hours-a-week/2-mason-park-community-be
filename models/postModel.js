@@ -48,8 +48,10 @@ exports.findAll = async (offset, limit) => {
         offset,
         limit,
         posts.length,
-        posts.slice(offset, offset + limit)
-            .map(post =>  ({
+        [...posts]
+            .sort((a, b) => b.post_id - a.post_id)
+            .slice(offset, offset + limit)
+            .map(post => ({
                 post_id: post.post_id,
                 title: post.title,
                 thumb_count: post.thumb_count,
