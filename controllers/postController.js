@@ -9,8 +9,7 @@ const fs = require('fs');
 const {ValidationError, NotFoundError, ForbiddenError} = require("../utils/error");
 
 exports.createPost = async (req, res, next) => {
-    const blob = req.files?.data?.[0] || null;
-    const {title, content} = blob ? JSON.parse(fs.readFileSync(blob.path, 'utf8')) : { };
+    const {title, content, post_image} = req.body;
 
     // 유효성 검사
     if (!title || !validator.validatePostTitle(title)) {
@@ -21,14 +20,8 @@ exports.createPost = async (req, res, next) => {
         throw new ValidationError(status.BAD_REQUEST_POST_CONTENT.message);
     }
 
-    // 이미지 체크
-    let imageUrl;
-    if (req.files.post_image) {
-        imageUrl = path.join('/image/users/', req.files.post_image[0].filename);
-    }
-
     // 저장
-    const post = await postModel.save(title, content, imageUrl, req.session.user.user_id);
+    const post = await postModel.save(title, content, post_image, req.session.user.user_id);
 
     return res
         .status(201)
@@ -108,8 +101,7 @@ exports.updatePost = async (req, res, next) => {
     }
 
     // 데이터 유효성 검사
-    const blob = req.files?.data?.[0] || null;
-    const {title, content} = blob ? JSON.parse(fs.readFileSync(blob.path, 'utf8')) : { };
+    const {title, content, post_image} = req.body;
 
     // 유효성 검사
     if (!title || !validator.validatePostTitle(title)) {
@@ -120,13 +112,7 @@ exports.updatePost = async (req, res, next) => {
         throw new ValidationError(status.BAD_REQUEST_POST_CONTENT.message);
     }
 
-    // 이미지 체크
-    let imageUrl;
-    if (req.files.post_image) {
-        imageUrl = path.join('/image/users/', req.files.post_image[0].filename);
-    }
-
-    const updatePost = await postModel.update(post.post_id, title, content, imageUrl);
+    const updatePost = await postModel.update(post.post_id, title, content, post_image);
 
     return res
         .status(200)
