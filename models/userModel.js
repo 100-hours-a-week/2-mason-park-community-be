@@ -79,7 +79,7 @@ exports.updatePassword = async (userId, password) => {
 }
 
 exports.deleteById = async (userId) => {
-    const users = functions.readDB(PATH);
+    const users = await functions.readDB(PATH);
 
     const targetIdx = users.findIndex((user) => String(user.user_id) === String(userId));
 

@@ -1,4 +1,5 @@
 const status = require('../utils/message');
+const {UnauthorizedError} = require("../utils/error");
 
 exports.isAuthenticated = (req, res, next) => {
     if (!req.session || !req.session.user.is_authenticated) {

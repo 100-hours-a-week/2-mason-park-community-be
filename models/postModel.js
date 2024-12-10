@@ -133,7 +133,7 @@ exports.deleteById = async (postId) => {
 }
 
 exports.deleteAllByUserId = async (userId) => {
-    const posts = functions.readDB(PATH);
+    const posts = await functions.readDB(PATH);
 
     const filteredPosts = posts
         .filter(post => String(post.user_id) === String(userId));

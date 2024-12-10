@@ -116,7 +116,7 @@ exports.updatePost = async (req, res, next) => {
         throw new ValidationError(status.BAD_REQUEST_POST_TITLE.message);
     }
 
-    if (!content) {
+    if (!content || !validator.validatePostContent(content)) {
         throw new ValidationError(status.BAD_REQUEST_POST_CONTENT.message);
     }
 

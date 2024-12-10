@@ -15,7 +15,12 @@ exports.validatePassword = password => {
 
 exports.validatePostTitle = title => {
     const len = title.length;
-    return 0 < len && len < 27;
+    return 0 < len && len <= 26;
+}
+
+exports.validatePostContent = content => {
+    const len = content.length;
+    return 0 < len && len <= 1500;
 }
 
 exports.validateId = id => {

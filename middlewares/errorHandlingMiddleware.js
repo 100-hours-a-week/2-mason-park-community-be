@@ -7,6 +7,7 @@ exports.errorHandler = (err, req, res, next) => {
             .status(err.statusCode)
             .json(response.error(err.name, err.message));
     } else {
+        console.log(err);
         res
             .status(500)
             .json(response.error(err.name, err.message));

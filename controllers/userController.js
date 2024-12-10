@@ -32,7 +32,10 @@ exports.getMyProfile = async (req, res, next) => {
     return res
         .status(200)
         .json(response.base(status.OK.message, {
-            ...user,
+            user_id: user.user_id,
+            email: user.email,
+            nickname: user.nickname,
+            profile_image: user.profile_image,
             is_authenticated: !!req.session.user.is_authenticated,
         }));
 }
