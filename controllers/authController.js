@@ -4,7 +4,7 @@ const crypto = require("crypto-js");
 const status = require("../utils/message");
 const {ValidationError, NotFoundError, UnauthorizedError, InternalServerError, ConflictError} = require("../utils/error");
 const transaction = require("../db/transaction");
-const userModel = require("../models/tempUserModel");
+const userModel = require("../models/useModel");
 
 exports.login = async (req, res, next) => {
     return await transaction(async(conn) => {
