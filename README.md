@@ -1,4 +1,4 @@
-# 아무 말 대잔치 커뮤니티 [BE]
+# 민수네 커뮤니티 [BE]
 
 ## 목차
 
@@ -23,28 +23,20 @@ KTB 클라우드 교육 과정에서 과제로 진행하는 커뮤니티 입니�
 
 ### 1-2. 개발 스택
 
-<div style="display:flex;gap:10px;flex-wrap:rap;">
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
     <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=JavaScript&logoColor=white">
     <img src="https://img.shields.io/badge/node.js-6DB33F?style=for-the-badge&logo=node.js&logoColor=white">
     <img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white">
+    <img src="https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=MariaDB&logoColor=white">
 </div>
 
 ### 1-3. 주요 기능
 
-#### MVC 패턴 적용
-
-
-
-#### 미들웨어
-
-- express-session : 세션 기반 인증 구현
-- cors : CORS 정책 설정 
-- express-async-errors : 비동기 함수 에러 핸들링 
-- multer : 이미지 업로드 
-- morgan : 로깅 
-- crypto-js : 비밀번호 암호화/복호화
+[시연 영상 URL](https://drive.google.com/file/d/1H3CKiEd1hRkiijUv4EUx-YWvnoCEnwBz/view?usp=sharing)
 
 ## 2. 개발 결과물
+
+### 2-1. 시스템 아키텍처
 
 ### 2-2. ERD
 

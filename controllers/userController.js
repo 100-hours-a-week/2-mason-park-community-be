@@ -121,18 +121,6 @@ exports.withdraw = async (req, res, next) => {
             if (err) {
                 next(new InternalServerError(status.INTERNAL_SERVER_ERROR.message));
             }
-
-            // 쿠키 제거
-            res.cookie('session_id', null, {
-                httpOnly: true,
-                secure: false,
-                maxAge: 0
-            })
-            res.cookie('user_id', null, {
-                httpOnly: true,
-                secure: false,
-                maxAge: 0
-            })
         })
 
         return res
