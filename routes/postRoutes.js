@@ -10,4 +10,6 @@ router.get('/', postController.getPosts);
 router.get('/:post_id', postController.getPost);
 router.patch('/:post_id', authenticator.isAuthenticated, postController.updatePost);
 router.delete('/:post_id', authenticator.isAuthenticated, postController.deletePost);
+router.post('/:post_id/thumbs', authenticator.isAuthenticated, postController.thumbsUpPost);
+router.delete('/:post_id/thumbs', authenticator.isAuthenticated, postController.thumbsDownPost);
 module.exports = router;

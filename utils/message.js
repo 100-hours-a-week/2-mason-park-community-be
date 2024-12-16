@@ -4,6 +4,7 @@ const status = {
     "OK": {
         "message" : "요청이 성공적으로 처리되었습니다."
     },
+    /* ---- 201 ---- */
     "CREATED_USER": {
         "message" : "사용자가 성공적으로 등록되었습니다."
     },
@@ -15,6 +16,9 @@ const status = {
     },
     "CREATED_COMMENT": {
         "message" : "댓글이 성공적으로 등록되었습니다."
+    },
+    "CREATED_POST_THUMBS_UP": {
+        "message" : "게시글 좋아요가 성공적으로 등록되었습니다."
     },
 
     /* ---- 400 ---- */
@@ -51,15 +55,19 @@ const status = {
     "BAD_REQUEST_ID": {
         "message" : "ID 유효성 검증에 실패했습니다."
     },
+
+    /* ---- 401 ---- */
     "UNAUTHORIZED": {
         "message" : "인증되지 않은 사용자입니다."
     },
+    /* ---- 403 ---- */
     "FORBIDDEN_POST": {
         "message" : "해당 게시글에 접근 권한이 없습니다."
     },
     "FORBIDDEN_COMMENT": {
         "message" : "해당 댓글에 접근 권한이 없습니다."
     },
+    /* ---- 404 ---- */
     "NOT_FOUND_USER": {
         "message" : "해당 유저가 존재하지 않습니다."
     },
@@ -69,11 +77,18 @@ const status = {
     "NOT_FOUND_COMMENT": {
         "message" : "해당 댓글이 존재하지 않습니다."
     },
+    "NOT_FOUND_POST_THUMBS": {
+        "message" : "해당 게시글 좋아요가 존재하지 않습니다."
+    },
+    /* ---- 409 ---- */
     "CONFLICT_EMAIL": {
         "message" : "이미 존재하는 이메일입니다."
     },
     "CONFLICT_NICKNAME": {
         "message" : "이미 존재하는 닉네임입니다."
+    },
+    "CONFLICT_POST_THUMBS": {
+        "message" : "이미 존재하는 게시글 좋아요입니다."
     },
 
     /* ---- 500 ---- */

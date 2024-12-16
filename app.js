@@ -9,7 +9,7 @@ const app = express();
 // == Middleware 설정 ==
 
 // 요청 body JSON 파싱
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 // 로깅
 app.use(logger);

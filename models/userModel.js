@@ -1,102 +1,56 @@
-const path = require('path');
-const functions = require('../utils/functions');
-const moment = require('moment');
-const {generateId} = require("./IDGenerator");
-const PATH = path.join(__dirname, process.env.DB_PATH_USER);
+exports.save = async (conn, email, password, nickname, profile_image) => {
+    const query = `INSERT INTO USERS (email, password, nickname, profile_image) VALUES (?, ?, ?, ?)`;
 
-function User (user_id, email, password, nickname, profile_image, created_at, modified_at) {
-    this.user_id = user_id;
-    this.email = email;
-    this.password = password;
-    this.nickname = nickname;
-    this.profile_image = profile_image;
-    this.created_at = created_at;
-    this.modified_at = modified_at;
+    // insertId : bigint | Number(insertId)
+    return await conn.query(query, [email, password, nickname, profile_image]);
 }
 
-exports.findByEmail = async (email) => {
-    const users = await functions.readDB(PATH);
+exports.existsEmail = async (conn, email) => {
+    const query = `SELECT 1 FROM USERS WHERE email = ? LIMIT 1`;
 
-    return users.find((user) => String(user.email) === String(email));
-};
+    const rows = await conn.query(query, [email]);
 
-exports.findById = async (userId) => {
-    const users = await functions.readDB(PATH);
-
-    return users.find((user) => String(user.user_id) === String(userId));
+    return rows.length > 0;
 }
 
-exports.save = async (email, password, nickname, profile_image) => {
-    const users = await functions.readDB(PATH);
+exports.existsNickname = async (conn, nickname) => {
+    const query = `SELECT 1 FROM USERS WHERE nickname = ? LIMIT 1`;
 
-    const user = new User(
-        generateId('users'),
-        email,
-        password,
-        nickname,
-        profile_image,
-        moment().format('YYYY-MM-DD HH:mm:ss'),
-        moment().format('YYYY-MM-DD HH:mm:ss'),
-    );
+    const rows = await conn.query(query, [nickname]);
 
-    users.push(user);
-    await functions.writeDB(PATH, users);
-
-    return user;
+    return rows.length > 0;
 }
 
-exports.update = async (userId, profile_image, nickname) => {
-    const users = await functions.readDB(PATH);
+exports.findByEmail = async (conn, email) => {
+    const query = `SELECT * FROM USERS WHERE email = ?`;
 
-    const targetIdx = users.findIndex((user) => String(user.user_id) === String(userId));
+    const [row] = await conn.query(query, [email]);
 
-    users[targetIdx] = {
-        ...users[targetIdx],
-        profile_image: profile_image ? profile_image : users[targetIdx].profile_image,
-        nickname: nickname ? nickname : users[targetIdx].nickname,
-        modified_at: moment().format('YYYY-MM-DD HH:mm:ss'),
-    };
-
-    await functions.writeDB(PATH, users);
-
-    return users[targetIdx];
+    return row; // User Object | undefined
 }
 
-exports.updatePassword = async (userId, password) => {
-    const users = await functions.readDB(PATH);
+exports.findById = async (conn, userId) => {
+    const query = `SELECT * FROM USERS WHERE user_id = ?`;
 
-    const targetIdx = users.findIndex((user) => String(user.user_id) === String(userId));
+    const [row] = await conn.query(query, [userId]);
 
-    users[targetIdx] = {
-        ...users[targetIdx],
-        password: password ? password : users[targetIdx].password,
-        modified_at: moment().format('YYYY-MM-DD HH:mm:ss'),
-    };
-
-    await functions.writeDB(PATH, users);
-
-    return users[targetIdx];
+    return row; // User Object | undefined
 }
 
-exports.deleteById = async (userId) => {
-    const users = await functions.readDB(PATH);
+exports.updateProfile = async (conn, nickname, profile_image, userId) => {
+    const query = `UPDATE USERS SET nickname = ?, profile_image = ? WHERE user_id = ?`;
 
-    const targetIdx = users.findIndex((user) => String(user.user_id) === String(userId));
-
-    // 회원 삭제
-    users.splice(targetIdx, 1);
-
-    await functions.writeDB(PATH, users);
+    return await conn.query(query, [nickname, profile_image, userId]);
 }
 
-exports.existsEmail = async (email) => {
-    const users = await functions.readDB(PATH);
+exports.updatePassword = async (conn, password, userId) => {
+    const query = `UPDATE USERS SET password = ? WHERE user_id = ?`;
 
-    return users.findIndex((user) => user.email === email) !== -1;
+    return await conn.query(query, [password, userId]);
 }
 
-exports.existsNickname = async (nickname) => {
-    const users = await functions.readDB(PATH);
+exports.deleteById = async (conn, userId) => {
+    const query = `DELETE FROM USERS WHERE user_id = ?`;
 
-    return users.findIndex((user) => user.nickname === nickname) !== -1;
+    return await conn.query(query, [userId]);
 }
