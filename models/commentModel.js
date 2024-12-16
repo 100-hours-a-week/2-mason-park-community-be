@@ -8,9 +8,11 @@ exports.save = async (conn, content, userId, postId) => {
 
 /* 댓글 유효성 검사 */
 exports.findById = async (conn, commentId) => {
-    const query = `SELECT FROM COMMENTS WHERE comment_id = ?`
+    const query = `SELECT * FROM COMMENTS WHERE comment_id = ?`
 
-    return await conn.query(query, [commentId]);
+    const [row] = await conn.query(query, [commentId]);
+
+    return row;
 }
 
 /* 댓글 목록 조회 */

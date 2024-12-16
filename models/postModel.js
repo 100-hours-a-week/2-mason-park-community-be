@@ -99,16 +99,20 @@ exports.findByIdWithUser = async (conn, viewerId, postId) => {
 /* 게시글 수정, 게시글 유효성 검사 */
 exports.findById = async (conn, postId) => {
     const query = `SELECT
-                    post_id,
-                    title, 
-                    content,
-                    comment_count,
-                    view_count,
-                    thumb_count,
-                    post_image,
-                    created_at
-                   FROM POSTS 
-                   WHERE post_id = ?
+                    p.post_id,
+                    p.title, 
+                    p.content,
+                    p.comment_count,
+                    p.view_count,
+                    p.thumb_count,
+                    p.post_image,
+                    p.created_at,
+                    u.user_id,
+                    u.nickname,
+                    u.profile_image
+                   FROM POSTS AS p
+                   JOIN USERS AS u ON p.user_id = u.user_id
+                   WHERE p.post_id = ?
     `;
 
     const [row] = await conn.query(query, [postId]);

@@ -142,7 +142,7 @@ exports.deletePost = async (req, res, next) => {
         }
 
         // 게시글 불러오기
-        const post = await postModel.findById(post_id);
+        const post = await postModel.findById(conn, post_id);
 
         if (!post) {
             throw new NotFoundError(status.NOT_FOUND_POST.message);
