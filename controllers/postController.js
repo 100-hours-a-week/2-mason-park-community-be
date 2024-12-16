@@ -52,10 +52,8 @@ exports.getPosts = async (req, res, next) => {
                 pagedPosts.offset,
                 pagedPosts.limit,
                 pagedPosts.total,
-                await Promise.all(pagedPosts.data.map(async (post) => {
-                    return {...post};
-                })))
-            );
+                pagedPosts.data
+            ));
     })
 }
 
@@ -68,7 +66,7 @@ exports.getPost = async (req, res, next) => {
         }
 
         // 게시글 조회
-        const post = await postModel.findByIdWithUser(conn, post_id);
+        const post = await postModel.findByIdWithUser(conn, req.session.user?.user_id, post_id);
 
         if (!post) {
             throw new ValidationError(status.NOT_FOUND_POST.message);

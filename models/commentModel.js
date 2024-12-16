@@ -1,92 +1,56 @@
-const path = require('path');
-const functions = require('../utils/functions');
 const moment = require('moment');
-const {generateId} = require("./IDGenerator");
-const PATH = path.join(__dirname, process.env.DB_PATH_COMMENT);
 
-function Comment (comment_id, content, created_at, modified_at, user_id, post_id) {
-    this.comment_id = comment_id;
-    this.content = content;
-    this.created_at = created_at;
-    this.modified_at = modified_at;
-    this.user_id = user_id;
-    this.post_id = post_id;
+exports.save = async (conn, content, userId, postId) => {
+    const query = `INSERT INTO COMMENTS (content, user_id, post_id) VALUES (?, ?, ?)`
+
+    return await conn.query(query, [content, userId, postId]);
 }
 
-exports.save = async (content, userId, postId) => {
-    const comments = await functions.readDB(PATH);
+/* 댓글 유효성 검사 */
+exports.findById = async (conn, commentId) => {
+    const query = `SELECT FROM COMMENTS WHERE comment_id = ?`
 
-    const comment = new Comment(
-        generateId('comments'),
-        content,
-        moment().format('YYYY-MM-DD HH:mm:ss'),
-        moment().format('YYYY-MM-DD HH:mm:ss'),
-        userId,
-        postId
-    );
-
-    comments.push(comment);
-    await functions.writeDB(PATH, comments);
-
-    return comment;
+    return await conn.query(query, [commentId]);
 }
 
-exports.findById = async (commentId) => {
-    const comments = await  functions.readDB(PATH);
+/* 댓글 목록 조회 */
+exports.findAllByPostId = async (conn, postId) => {
+    const query = `SELECT 
+                     c.comment_id,
+                     c.content,
+                     c.created_at,
+                     u.user_id,
+                     u.nickname,
+                     u.profile_image
+                    FROM COMMENTS AS c
+                    JOIN USERS AS u ON c.user_id = u.user_id
+                    WHERE c.post_id = ?`
 
-    return comments
-        .find(comment => String(comment.comment_id) === String(commentId));
+    const rows = await conn.query(query, [postId]);
+
+    return rows.map(row => ({
+        comment_id: row.comment_id,
+        content: row.content,
+        created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss'),
+        user: {
+            user_id: row.user_id,
+            nickname: row.nickname,
+            profile_image: row.profile_image,
+        }
+    }))
 }
 
-exports.findAllByPostId = async (postId) => {
-    const comments = await functions.readDB(PATH);
+exports.update = async (conn, content, commentId) => {
+    const query = `UPDATE COMMENTS SET
+                    content = ?
+                   WHERE comment_id = ?
+    `;
 
-    return comments
-        .filter(comment => String(comment.post_id) === String(postId))
-        .sort((a, b) => Number(a.comment_id) - Number(b.comment_id));
+    return await conn.query(query, [content, commentId]);
 }
 
-exports.update = async (commentId, content) => {
-    const comments = await functions.readDB(PATH);
+exports.deleteById = async (conn, commentId) => {
+    const query = `DELETE FROM COMMENTS WHERE comment_id = ?`
 
-    const targetIdx = comments
-        .findIndex(comment => String(comment.comment_id) === String(commentId));
-
-    comments[targetIdx] = {
-        ...comments[targetIdx],
-        content: content ? content : comments[targetIdx].content,
-        modified_at: moment().format('YYYY-MM-DD HH:mm:ss'),
-    }
-    await functions.writeDB(PATH, comments);
-
-    return comments[targetIdx];
-}
-
-exports.deleteById = async (commentId) => {
-    const comments = await functions.readDB(PATH);
-
-    const targetIdx = comments
-        .findIndex(comment => String(comment.comment_id) === String(commentId));
-
-    comments.splice(targetIdx, 1);
-
-    await functions.writeDB(PATH, comments);
-}
-
-exports.deleteAllByPostId = async (postId) => {
-    const comments = await functions.readDB(PATH);
-
-    const filteredComments = comments
-        .filter(comment => String(comment.post_id) !== String(postId))
-
-    await functions.writeDB(PATH, filteredComments);
-}
-
-exports.deleteAllByUserId = async (userId) => {
-    const comments = await functions.readDB(PATH);
-
-    const filteredComments = comments
-        .filter(comment => String(comment.user_id) !== String(userId))
-
-    await functions.writeDB(PATH, filteredComments);
+    return await conn.query(query, [commentId]);
 }

@@ -9,7 +9,7 @@ exports.save = async (conn, title, content, post_image, userId) => {
 }
 
 /* 게시글 목록 조회 */
-exports.findAll = async (conn, limit, offset, userId) => {
+exports.findAll = async (conn, limit, offset, viewerId) => {
     const contentQuery = `SELECT 
                            p.post_id,
                            p.title, 
@@ -27,7 +27,7 @@ exports.findAll = async (conn, limit, offset, userId) => {
                           ORDER BY p.created_at DESC
                           LIMIT ? OFFSET ?
     `;
-    const rows = await conn.query(contentQuery, [userId, limit, offset]);
+    const rows = await conn.query(contentQuery, [viewerId, limit, offset]);
 
 
     const countQuery = `SELECT COUNT(*) AS total FROM POSTS`;
@@ -56,7 +56,7 @@ exports.findAll = async (conn, limit, offset, userId) => {
 }
 
 /* 게시글 상세 조회 */
-exports.findByIdWithUser = async (conn, postId) => {
+exports.findByIdWithUser = async (conn, viewerId, postId) => {
     const query = `SELECT
                     p.post_id,
                     p.title, 
@@ -76,7 +76,7 @@ exports.findByIdWithUser = async (conn, postId) => {
                    WHERE p.post_id = ?
     `;
 
-    const [row] = await conn.query(query, [postId]);
+    const [row] = await conn.query(query, [viewerId, postId]);
 
     return {
         post_id: row.post_id,
@@ -106,7 +106,7 @@ exports.findById = async (conn, postId) => {
                     view_count,
                     thumb_count,
                     post_image,
-                    created_at,
+                    created_at
                    FROM POSTS 
                    WHERE post_id = ?
     `;
@@ -127,9 +127,30 @@ exports.update = async (conn, title, content, post_image, postId) => {
     return await conn.query(query, [title, content, post_image, postId]);
 }
 
+/* 조회수 증가 */
 exports.incrementViewCount = async (conn, postId) => {
     const query = `UPDATE POSTS SET
                     view_count = view_count + 1
+                   WHERE post_id = ?
+    `
+
+    return await conn.query(query, [postId]);
+}
+
+/* 댓글수 증가 */
+exports.incrementCommentCount = async (conn, postId) => {
+    const query = `UPDATE POSTS SET
+                    comment_count = comment_count + 1
+                   WHERE post_id = ?
+    `
+
+    return await conn.query(query, [postId]);
+}
+
+/* 댓글수 감소 */
+exports.decrementCommentCount = async (conn, postId) => {
+    const query = `UPDATE POSTS SET
+                    comment_count = comment_count - 1
                    WHERE post_id = ?
     `
 
