@@ -1,148 +1,210 @@
-const userModel = require('../models/userModel');
 const postModel = require('../models/postModel');
-const commentModel = require('../models/commentModel');
+const postThumbsModel = require('../models/postThumbsModel');
+const transaction = require('../db/transaction');
 const response = require("../utils/response");
 const validator = require('../utils/validator');
 const status = require('../utils/message');
-const path = require('path');
-const fs = require('fs');
 const {ValidationError, NotFoundError, ForbiddenError} = require("../utils/error");
 
 exports.createPost = async (req, res, next) => {
-    const {title, content, post_image} = req.body;
+    return await transaction(async (conn) => {
+        const {title, content, post_image} = req.body;
 
-    // 유효성 검사
-    if (!title || !validator.validatePostTitle(title)) {
-        throw new ValidationError(status.BAD_REQUEST_POST_TITLE.message);
-    }
+        // 제목 유효성 검사
+        if (!title || !validator.validatePostTitle(title)) {
+            throw new ValidationError(status.BAD_REQUEST_POST_TITLE.message);
+        }
 
-    if (!content) {
-        throw new ValidationError(status.BAD_REQUEST_POST_CONTENT.message);
-    }
+        // 내용 유효성 검사
+        if (!content) {
+            throw new ValidationError(status.BAD_REQUEST_POST_CONTENT.message);
+        }
 
-    // 저장
-    const post = await postModel.save(title, content, post_image, req.session.user.user_id);
+        // 게시글 저장
+        const result = await postModel.save(conn,title, content, post_image, req.session.user.user_id);
 
-    return res
-        .status(201)
-        .json(response.base(status.CREATED_POST.message, {post_id: post.post_id}));
+        return res
+            .status(201)
+            .json(response.base(status.CREATED_POST.message, {post_id: Number(result.insertId)}));
+    })
 }
 
 exports.getPosts = async (req, res, next) => {
-    const {offset, limit} = req.query;
+    return await transaction(async (conn) => {
+        const {offset, limit} = req.query;
 
-    // 유효성 검사
-    if (!offset || !limit) {
-        throw new ValidationError(status.BAD_REQUEST_OFFSET_LIMIT.message);
-    }
+        // 유효성 검사
+        if (!offset || !limit) {
+            throw new ValidationError(status.BAD_REQUEST_OFFSET_LIMIT.message);
+        }
 
-    const pagedPosts = await postModel.findAll(offset, limit);
-
-    return res
-        .status(200)
-        .json(response.page(
-            status.OK.message,
-            pagedPosts.offset,
-            pagedPosts.limit,
-            pagedPosts.total,
-            await Promise.all(pagedPosts.data.map(async (post) => {
-                const user = await userModel.findById(post.user_id);
-                return {...post, user};
-            })))
+        const pagedPosts = await postModel.findAll(
+            conn,
+            parseInt(limit),
+            parseInt(offset),
+            req.session.user?.user_id
         );
+
+        return res
+            .status(200)
+            .json(response.page(
+                status.OK.message,
+                pagedPosts.offset,
+                pagedPosts.limit,
+                pagedPosts.total,
+                await Promise.all(pagedPosts.data.map(async (post) => {
+                    return {...post};
+                })))
+            );
+    })
 }
 
 exports.getPost = async (req, res, next) => {
-    const { post_id } = req.params;
-    // 유효성 검사
-    if (!validator.validateId(post_id)) {
-        throw new ValidationError(status.BAD_REQUEST_ID.message);
-    }
+    return await transaction(async (conn) => {
+        const { post_id } = req.params;
+        // Post ID 유효성 검사
+        if (!validator.validateId(post_id)) {
+            throw new ValidationError(status.BAD_REQUEST_ID.message);
+        }
 
-    const post = await postModel.findById(post_id);
+        // 게시글 조회
+        const post = await postModel.findByIdWithUser(conn, post_id);
 
-    if (!post) {
-        throw new ValidationError(status.NOT_FOUND_POST.message);
-    }
+        if (!post) {
+            throw new ValidationError(status.NOT_FOUND_POST.message);
+        }
 
-    const user = await userModel.findById(post.user_id);
+        // 조회수 증가
+        await postModel.incrementViewCount(conn, post_id);
 
-    const { comment } = req.query;
-    // 유효성 검사
-    let comments;
-    if (comments && comment.toUpperCase() === 'Y') {
-        comments = await commentModel.findAllByPostId(post_id);
-    }
-
-    return res
-        .status(200)
-        .json(response.base(status.OK.message, {
-            ...post, user, comments
-        }));
+        // Q : 조회수 동시성 문제 ? (크리티컬한 문제는 아님)
+        return res
+            .status(200)
+            .json(response.base(status.OK.message, {
+                ...post,
+                view_count: post.view_count + 1,
+            }));
+    })
 }
 
 exports.updatePost = async (req, res, next) => {
-    const { post_id } = req.params;
+    return await transaction(async (conn) => {
+        const { post_id } = req.params;
 
-    // Path Variable 유효성 검사
-    if (!validator.validateId(post_id)) {
-        throw new ValidationError(status.BAD_REQUEST_ID.message);
-    }
+        // Post ID 유효성 검사
+        if (!validator.validateId(post_id)) {
+            throw new ValidationError(status.BAD_REQUEST_ID.message);
+        }
 
-    // 게시글 조회
-    const post = await postModel.findById(post_id);
-    if (!post) {
-        throw new NotFoundError(status.NOT_FOUND_POST.message);
-    }
+        // 게시글 불러오기
+        const post = await postModel.findById(conn,post_id);
+        if (!post) {
+            throw new NotFoundError(status.NOT_FOUND_POST.message);
+        }
 
-    // 권한 검사
-    if (String(post.user_id) !== String(req.session.user.user_id)) {
-        throw new ForbiddenError(status.FORBIDDEN_POST.message);
-    }
+        // 권한 검사
+        if (String(post.user_id) !== String(req.session.user.user_id)) {
+            throw new ForbiddenError(status.FORBIDDEN_POST.message);
+        }
 
-    // 데이터 유효성 검사
-    const {title, content, post_image} = req.body;
+        // 데이터 유효성 검사
+        const {title, content, post_image} = req.body;
 
-    // 유효성 검사
-    if (!title || !validator.validatePostTitle(title)) {
-        throw new ValidationError(status.BAD_REQUEST_POST_TITLE.message);
-    }
+        // 제목 유효성 검사
+        if (!title || !validator.validatePostTitle(title)) {
+            throw new ValidationError(status.BAD_REQUEST_POST_TITLE.message);
+        }
 
-    if (!content || !validator.validatePostContent(content)) {
-        throw new ValidationError(status.BAD_REQUEST_POST_CONTENT.message);
-    }
+        // 내용 유효성 검사
+        if (!content || !validator.validatePostContent(content)) {
+            throw new ValidationError(status.BAD_REQUEST_POST_CONTENT.message);
+        }
 
-    const updatePost = await postModel.update(post.post_id, title, content, post_image);
+        await postModel.update(
+            conn,
+            title,
+            content,
+            post_image ? post_image : post.post_image,
+            post.post_id
+        );
 
-    return res
-        .status(200)
-        .json(response.base(status.OK.message, {post_id: updatePost.post_id}));
+        return res
+            .status(200)
+            .json(response.base(status.OK.message, {post_id: post.post_id}));
+    })
 }
 
 exports.deletePost = async (req, res, next) => {
-    const { post_id } = req.params;
+    return await transaction(async (conn) => {
+        const { post_id } = req.params;
 
-    // Path Variable 유효성 검사
-    if (!validator.validateId(post_id)) {
-        throw new ValidationError(status.BAD_REQUEST_ID.message);
-    }
+        // Post ID 유효성 검사
+        if (!validator.validateId(post_id)) {
+            throw new ValidationError(status.BAD_REQUEST_ID.message);
+        }
 
-    // 게시글 조회
-    const post = await postModel.findById(post_id);
+        // 게시글 불러오기
+        const post = await postModel.findById(post_id);
 
-    if (!post) {
-        throw new NotFoundError(status.NOT_FOUND_POST.message);
-    }
+        if (!post) {
+            throw new NotFoundError(status.NOT_FOUND_POST.message);
+        }
 
-    // 권한 검사
-    if (String(post.user_id) !== String(req.session.user.user_id)) {
-        throw new ForbiddenError(status.FORBIDDEN_POST.message);
-    }
+        // 권한 검사
+        if (String(post.user_id) !== String(req.session.user.user_id)) {
+            throw new ForbiddenError(status.FORBIDDEN_POST.message);
+        }
 
-    await commentModel.deleteAllByPostId(post.post_id);
-    await postModel.deleteById(post.post_id);
+        await postModel.deleteById(conn, post.post_id);
 
-    return res
-        .status(204)
-        .send();
+        return res
+            .status(204)
+            .send();
+    })
+}
+
+exports.thumbsUpPost = async (req, res, next) => {
+    return await transaction(async (conn) => {
+        const { post_id } = req.params;
+
+        // Post ID 유효성 검사
+        if (!validator.validateId(post_id)) {
+            throw new ValidationError(status.BAD_REQUEST_ID.message);
+        }
+
+        // 이미 좋아요 했는지 확인
+        if (await postThumbsModel.existsByUserIdAndPostId(conn, req.session.user.user_id, post_id)) {
+            throw new ValidationError(status.CONFLICT_POST_THUMBS.message);
+        }
+
+        // 게시글 좋아요 등록
+        const result = await postThumbsModel.save(conn, req.session.user.user_id, post_id);
+
+        return res
+            .status(201)
+            .send(response.base(status.CREATED_POST_THUMBS_UP.message, {thumb_id: Number(result.insertId)}));
+    })
+}
+
+exports.thumbsDownPost = async (req, res, next) => {
+    return await transaction(async (conn) => {
+        const { post_id } = req.params;
+
+        // Post ID 유효성 검사
+        if (!validator.validateId(post_id)) {
+            throw new ValidationError(status.BAD_REQUEST_ID.message);
+        }
+
+        // 이미 좋아요 했는지 확인
+        if (!await postThumbsModel.existsByUserIdAndPostId(conn, req.session.user.user_id, post_id)) {
+            throw new ValidationError(status.NOT_FOUND_POST_THUMBS.message);
+        }
+
+        // 게시글 좋아요 삭제
+        await postThumbsModel.deleteByUserIdAndPostId(conn, req.session.user.user_id, post_id);
+
+        return res
+            .status(204)
+            .send();
+    })
 }

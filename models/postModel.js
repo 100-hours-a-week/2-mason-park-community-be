@@ -1,142 +1,143 @@
-const path = require('path');
-const functions = require('../utils/functions');
 const response = require('../utils/response');
 const moment = require('moment');
-const {generateId} = require("./IDGenerator");
-const PATH = path.join(__dirname, process.env.DB_PATH_POST);
 
-function Post (post_id, title, content, thumb_count, view_count, comment_count, post_image, created_at, modified_at, user_id) {
-    this.post_id = post_id;
-    this.title = title;
-    this.content = content;
-    this.thumb_count = thumb_count;
-    this.view_count = view_count;
-    this.comment_count = comment_count;
-    this.post_image = post_image;
-    this.created_at = created_at;
-    this.modified_at = modified_at;
-    this.user_id = user_id;
+exports.save = async (conn, title, content, post_image, userId) => {
+    const query = `INSERT INTO POSTS (title, content, post_image, user_id) VALUES (?, ?, ?, ?)`;
+
+    // insertId : bigint | Number(insertId)
+    return await conn.query(query, [title, content, post_image, userId]);
 }
 
-exports.save = async (title, content, post_image=null, user_id) => {
-    const posts = await functions.readDB(PATH);
+/* 게시글 목록 조회 */
+exports.findAll = async (conn, limit, offset, userId) => {
+    const contentQuery = `SELECT 
+                           p.post_id,
+                           p.title, 
+                           p.comment_count,
+                           p.view_count,
+                           p.thumb_count,
+                           p.created_at,
+                           u.user_id,
+                           u.nickname,
+                           u.profile_image,
+                           (SELECT 1 FROM POST_THUMBS AS pt
+                               WHERE pt.post_id = p.post_id AND pt.user_id = ?) AS is_thumbs
+                          FROM POSTS AS p 
+                          JOIN USERS AS u ON p.user_id = u.user_id
+                          ORDER BY p.created_at DESC
+                          LIMIT ? OFFSET ?
+    `;
+    const rows = await conn.query(contentQuery, [userId, limit, offset]);
 
-    const post = new Post(
-        generateId('posts'),
-        title,
-        content,
-        0,
-        0,
-        0,
-        post_image,
-        moment().format('YYYY-MM-DD HH:mm:ss'),
-        moment().format('YYYY-MM-DD HH:mm:ss'),
-        user_id
-    );
 
-    posts.push(post);
-    await functions.writeDB(PATH, posts);
-
-    return post;
-}
-
-exports.findAll = async (offset, limit) => {
-    const posts = await functions.readDB(PATH);
+    const countQuery = `SELECT COUNT(*) AS total FROM POSTS`;
+    const [row] = await conn.query(countQuery, [limit, offset]);
 
     return response.page(
-        '',
+        null,
         offset,
         limit,
-        posts.length,
-        [...posts]
-            .sort((a, b) => b.post_id - a.post_id)
-            .slice(offset, offset + limit)
-            .map(post => ({
-                post_id: post.post_id,
-                title: post.title,
-                thumb_count: post.thumb_count,
-                view_count: post.view_count,
-                comment_count: post.comment_count,
-                created_at: post.created_at,
-                modified_at: post.modified_at,
-                user_id: post.user_id,
-            })
-    ));
+        Number(row.total),
+        rows.map(row => ({
+            post_id: row.post_id,
+            title: row.title,
+            thumb_count: row.thumb_count,
+            view_count: row.view_count,
+            comment_count: row.comment_count,
+            created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss'),
+            is_thumbs: row.is_thumbs,
+            user: {
+                user_id: row.user_id,
+                nickname: row.nickname,
+                profile_image: row.profile_image,
+            }
+        }))
+    )
 }
 
-exports.findById = async (postId) => {
-    const posts = await functions.readDB(PATH);
+/* 게시글 상세 조회 */
+exports.findByIdWithUser = async (conn, postId) => {
+    const query = `SELECT
+                    p.post_id,
+                    p.title, 
+                    p.content,
+                    p.comment_count,
+                    p.view_count,
+                    p.thumb_count,
+                    p.post_image,
+                    p.created_at,
+                    u.user_id,
+                    u.nickname,
+                    u.profile_image,
+                    (SELECT 1 FROM POST_THUMBS AS pt
+                               WHERE pt.post_id = p.post_id AND pt.user_id = ?) AS is_thumbs 
+                   FROM POSTS AS p
+                   JOIN USERS AS u ON p.user_id = u.user_id
+                   WHERE p.post_id = ?
+    `;
 
-    const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
-    posts[targetIdx] = {
-        ...posts[targetIdx],
-        view_count: posts[targetIdx].view_count + 1,
-    }
+    const [row] = await conn.query(query, [postId]);
 
-    await functions.writeDB(PATH, posts);
-
-    return posts[targetIdx];
+    return {
+        post_id: row.post_id,
+        title: row.title,
+        content: row.content,
+        post_image: row.post_image,
+        thumb_count: row.thumb_count,
+        view_count: row.view_count,
+        comment_count: row.comment_count,
+        created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss'),
+        is_thumbs: row.is_thumbs,
+        user: {
+            user_id: row.user_id,
+            nickname: row.nickname,
+            profile_image: row.profile_image,
+        }
+    }; // Post Detail Object | undefined
 }
 
-exports.update = async (postId, title, content, imageUrl) => {
-    const posts = await functions.readDB(PATH);
+/* 게시글 수정, 게시글 유효성 검사 */
+exports.findById = async (conn, postId) => {
+    const query = `SELECT
+                    post_id,
+                    title, 
+                    content,
+                    comment_count,
+                    view_count,
+                    thumb_count,
+                    post_image,
+                    created_at,
+                   FROM POSTS 
+                   WHERE post_id = ?
+    `;
 
-    const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
-    posts[targetIdx] = {
-        ...posts[targetIdx],
-        title: title ? title : posts[targetIdx].title,
-        content: content ? content : posts[targetIdx].content,
-        post_image: imageUrl ? imageUrl : posts[targetIdx].post_image,
-        modified_at: moment().format('YYYY-MM-DD HH:mm:ss')
-    }
+    const [row] = await conn.query(query, [postId]);
 
-    await functions.writeDB(PATH, posts);
-
-    return posts[targetIdx];
+    return row; // Post Detail Object | undefined
 }
 
-exports.incrementCommentCount = async (postId) => {
-    const posts = await functions.readDB(PATH);
+exports.update = async (conn, title, content, post_image, postId) => {
+    const query = `UPDATE POSTS SET
+                    title = ?, 
+                    content = ?, 
+                    post_image = ? 
+                   WHERE post_id = ?
+    `;
 
-    const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
-    posts[targetIdx] = {
-        ...posts[targetIdx],
-        comment_count: posts[targetIdx].comment_count + 1,
-    }
-
-    await  functions.writeDB(PATH, posts);
-
-    return posts[targetIdx];
+    return await conn.query(query, [title, content, post_image, postId]);
 }
 
-exports.decrementCommentCount = async (postId) => {
-    const posts = await functions.readDB(PATH);
+exports.incrementViewCount = async (conn, postId) => {
+    const query = `UPDATE POSTS SET
+                    view_count = view_count + 1
+                   WHERE post_id = ?
+    `
 
-    const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
-    posts[targetIdx] = {
-        ...posts[targetIdx],
-        comment_count: posts[targetIdx].comment_count - 1,
-    }
-
-    await  functions.writeDB(PATH, posts);
-
-    return posts[targetIdx];
+    return await conn.query(query, [postId]);
 }
 
-exports.deleteById = async (postId) => {
-    const posts = await functions.readDB(PATH);
+exports.deleteById = async (conn, postId) => {
+    const query = `DELETE FROM POSTS WHERE post_id = ?`;
 
-    const targetIdx = posts.findIndex((post) => String(post.post_id) === String(postId));
-    posts.splice(targetIdx, 1);
-
-    await functions.writeDB(PATH, posts);
-}
-
-exports.deleteAllByUserId = async (userId) => {
-    const posts = await functions.readDB(PATH);
-
-    const filteredPosts = posts
-        .filter(post => String(post.user_id) === String(userId));
-
-    await functions.writeDB(PATH, filteredPosts);
+    return await conn.query(query, [postId]);
 }

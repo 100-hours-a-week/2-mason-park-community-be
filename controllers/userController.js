@@ -1,4 +1,4 @@
-const model = require('../models/useModel');
+const model = require('../models/userModel');
 const transaction = require('../db/transaction');
 const path = require('path');
 const validator = require("../utils/validator");

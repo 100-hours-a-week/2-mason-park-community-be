@@ -4,7 +4,7 @@ const crypto = require("crypto-js");
 const status = require("../utils/message");
 const {ValidationError, NotFoundError, UnauthorizedError, InternalServerError, ConflictError} = require("../utils/error");
 const transaction = require("../db/transaction");
-const userModel = require("../models/useModel");
+const userModel = require("../models/userModel");
 
 exports.login = async (req, res, next) => {
     return await transaction(async(conn) => {
@@ -27,7 +27,7 @@ exports.login = async (req, res, next) => {
         }
 
         const user = await userModel.findByEmail(conn, email);
-        console.log(user);
+
         if (!user) {
             throw new NotFoundError(status.NOT_FOUND_USER.message);
         }
