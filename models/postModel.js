@@ -161,6 +161,26 @@ exports.decrementCommentCount = async (conn, postId) => {
     return await conn.query(query, [postId]);
 }
 
+/* 좋아요수 증가 */
+exports.incrementThumbsCount = async (conn, postId) => {
+    const query = `UPDATE POSTS SET
+                    thumb_count = thumb_count + 1
+                   WHERE post_id = ?
+    `
+
+    return await conn.query(query, [postId]);
+}
+
+/* 좋아요수 감소 */
+exports.decrementThumbsCount = async (conn, postId) => {
+    const query = `UPDATE POSTS SET
+                    thumb_count = thumb_count - 1
+                   WHERE post_id = ?
+    `
+
+    return await conn.query(query, [postId]);
+}
+
 exports.deleteById = async (conn, postId) => {
     const query = `DELETE FROM POSTS WHERE post_id = ?`;
 

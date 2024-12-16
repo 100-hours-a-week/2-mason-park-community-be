@@ -177,6 +177,8 @@ exports.thumbsUpPost = async (req, res, next) => {
 
         // 게시글 좋아요 등록
         const result = await postThumbsModel.save(conn, req.session.user.user_id, post_id);
+        // 게시글 좋아요 증가
+        await postModel.incrementThumbsCount(conn, post_id);
 
         return res
             .status(201)
@@ -200,6 +202,8 @@ exports.thumbsDownPost = async (req, res, next) => {
 
         // 게시글 좋아요 삭제
         await postThumbsModel.deleteByUserIdAndPostId(conn, req.session.user.user_id, post_id);
+        // 게시글 좋아요 감소
+        await postModel.decrementThumbsCount(conn, post_id);
 
         return res
             .status(204)
