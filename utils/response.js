@@ -1,3 +1,6 @@
+const moment = require('moment-timezone')
+moment.tz.setDefault('Asia/Seoul');
+
 exports.base = (message='', data) => {
     return {
         message: message,
@@ -20,4 +23,8 @@ exports.error = (error, message='') => {
         error: error,
         message: message
     }
+}
+
+exports.time = (time, format='YYYY-MM-DD HH:mm:ss') => {
+    return moment(time).format(format);
 }

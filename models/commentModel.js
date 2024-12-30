@@ -1,4 +1,4 @@
-const moment = require('moment');
+const {time} = require("../utils/response");
 
 exports.save = async (conn, content, userId, postId) => {
     const query = `INSERT INTO COMMENTS (content, user_id, post_id) VALUES (?, ?, ?)`
@@ -33,7 +33,7 @@ exports.findAllByPostId = async (conn, postId) => {
     return rows.map(row => ({
         comment_id: row.comment_id,
         content: row.content,
-        created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss'),
+        created_at: time(row.created_at),
         user: {
             user_id: row.user_id,
             nickname: row.nickname,

@@ -1,6 +1,5 @@
-const response = require('../utils/response');
-const moment = require('moment');
-
+const {time} = require("../utils/response");
+const response = require("../utils/response");
 exports.save = async (conn, title, content, post_image, userId) => {
     const query = `INSERT INTO POSTS (title, content, post_image, user_id) VALUES (?, ?, ?, ?)`;
 
@@ -44,7 +43,7 @@ exports.findAll = async (conn, limit, offset, viewerId) => {
             thumb_count: row.thumb_count,
             view_count: row.view_count,
             comment_count: row.comment_count,
-            created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss'),
+            created_at: time(row.created_at),
             is_thumbs: row.is_thumbs,
             user: {
                 user_id: row.user_id,
@@ -86,7 +85,7 @@ exports.findByIdWithUser = async (conn, viewerId, postId) => {
         thumb_count: row.thumb_count,
         view_count: row.view_count,
         comment_count: row.comment_count,
-        created_at: moment(row.created_at).format('YYYY-MM-DD HH:mm:ss'),
+        created_at: time(row.created_at),
         is_thumbs: row.is_thumbs,
         user: {
             user_id: row.user_id,
