@@ -16,7 +16,7 @@ app.use(logger);
 
 // CORS
 app.use(cors({
-    origin: 'http://localhost:3000', // 허용할 출처 (default : 모든 출처 허용)
+    origin: process.env.ALLOWED_ORIGINS, // 허용할 출처 (default : 모든 출처 허용)
     credentials: true, // 쿠키, 인증 정보 전송 허용 여부 (default : false)
 }));
 
