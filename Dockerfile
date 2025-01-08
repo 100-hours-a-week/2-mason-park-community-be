@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-RUN npm install --only=production && npm cache clean --force
+RUN npm ci --only=production
 
 COPY . .
 
