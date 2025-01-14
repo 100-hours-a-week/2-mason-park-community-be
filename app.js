@@ -38,6 +38,13 @@ app.use(session({
 const router = require('./routes/index');
 app.use('/api', router);
 
+// 헬스 체크
+app.get('/api/healthcheck', (req, res, next) => {
+    return res
+        .status(200)
+        .send('OK');
+})
+
 // 에러 핸들링
 app.use('/api', errorHandler);
 
