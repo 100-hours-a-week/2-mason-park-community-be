@@ -4,8 +4,8 @@ exports.validateEmail = email => {
 }
 
 exports.validateNickname = nickname => {
-    // 닉네임은 2자 이상 / 10자 이하 / 공백 X
-    return /^[가-힣a-zA-Z0-9]{2,10}$/.test(nickname);
+    // 닉네임은 1자 이상 / 10자 이하 / 공백 X
+    return /^[^\s]{1,10}$/.test(nickname);
 }
 
 exports.validatePassword = password => {
