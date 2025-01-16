@@ -20,6 +20,9 @@ const status = {
     "CREATED_POST_THUMBS_UP": {
         "message" : "게시글 좋아요가 성공적으로 등록되었습니다."
     },
+    "CREATED_PRE_SIGNED_URL": {
+        "message" : "PreSignedURL이 성공적으로 생성되었습니다."
+    },
 
     /* ---- 400 ---- */
     "BAD_REQUEST": {
