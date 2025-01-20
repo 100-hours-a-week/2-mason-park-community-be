@@ -41,7 +41,8 @@ exports.login = async (req, res, next) => {
         // 로그인 성공 세션 저장 및 쿠키 설정
         req.session.user = {
             user_id: user.user_id,
-            is_authenticated: true
+            is_authenticated: true,
+            role: user.role
         };
 
         res.cookie('user_id', user.user_id, {

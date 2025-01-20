@@ -37,6 +37,7 @@ exports.getMyProfile = async (req, res, next) => {
                 email: user.email,
                 nickname: user.nickname,
                 profile_image: user.profile_image,
+                role: user.role,
                 is_authenticated: !!req.session.user.is_authenticated,
             }));
     })

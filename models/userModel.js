@@ -1,3 +1,6 @@
+const {time} = require("../utils/response");
+const response = require("../utils/response");
+
 exports.save = async (conn, email, password, nickname, profile_image) => {
     const query = `INSERT INTO USERS (email, password, nickname, profile_image) VALUES (?, ?, ?, ?)`;
 
@@ -36,6 +39,41 @@ exports.findById = async (conn, userId) => {
 
     return row; // User Object | undefined
 }
+
+/* 유저 목록 조회 */
+exports.findAll = async (conn, limit, offset) => {
+    const contentQuery = `SELECT 
+                           u.user_id,
+                           u.email,
+                           u.nickname,
+                           u.profile_image,
+                           u.role,
+                           u.created_at
+                          FROM USERS AS u 
+                          ORDER BY u.created_at DESC
+                          LIMIT ? OFFSET ?
+    `;
+    const rows = await conn.query(contentQuery, [limit, offset]);
+
+    const countQuery = `SELECT COUNT(*) AS total FROM USERS`;
+    const [row] = await conn.query(countQuery);
+
+    return response.page(
+        null,
+        offset,
+        limit,
+        Number(row.total),
+        rows.map(row => ({
+            user_id: row.user_id,
+            email: row.email,
+            nickname: row.nickname,
+            profile_image: row.profile_image,
+            role: row.role,
+            created_at: time(row.created_at),
+        }))
+    )
+}
+
 
 exports.updateProfile = async (conn, nickname, profile_image, userId) => {
     const query = `UPDATE USERS SET nickname = ?, profile_image = ? WHERE user_id = ?`;

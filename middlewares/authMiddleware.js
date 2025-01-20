@@ -11,3 +11,12 @@ exports.isAuthenticated = (req, res, next) => {
     // 인증 성공
     return next();
 };
+
+exports.isAdmin = (req, res, next) => {
+    if (!req.session || !req.session.user.is_authenticated || req.session.user.role !== 'ADMIN') {
+        throw new UnauthorizedError(status.UNAUTHORIZED.message);
+    }
+
+    // 인증 성공
+    return next();
+};
