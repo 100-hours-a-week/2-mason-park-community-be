@@ -1,9 +1,10 @@
 const transaction = require("../db/transaction");
-const {ValidationError, NotFoundError, UnauthorizedError} = require("../utils/error");
+const {ValidationError, NotFoundError, UnauthorizedError, InternalServerError} = require("../utils/error");
 const status = require("../utils/message");
 const userModel = require("../models/userModel");
 const response = require("../utils/response");
 const crypto = require("crypto-js");
+const validator = require("../utils/validator");
 
 exports.login = async (req, res, next) => {
     return await transaction(async(conn) => {
@@ -88,5 +89,31 @@ exports.getUsers = async (req, res, next) => {
                 pagedUsers.total,
                 pagedUsers.data
             ));
+    })
+}
+
+exports.deleteUser = async (req, res, next) => {
+    return await transaction(async (conn) => {
+
+        const { user_id } = req.params;
+
+        // USER ID 유효성 검사
+        if (!validator.validateId(user_id)) {
+            throw new ValidationError(status.BAD_REQUEST_ID.message);
+        }
+
+        // 유저 조회
+        const user = await userModel.findById(conn, user_id);
+
+        if(!user) {
+            throw new NotFoundError(status.NOT_FOUND_USER.message);
+        }
+
+        // 유저 삭제
+        await userModel.deleteById(conn,user_id);
+
+        return res
+            .status(204)
+            .send();
     })
 }
