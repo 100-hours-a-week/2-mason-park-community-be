@@ -34,6 +34,9 @@ const status = {
     "BAD_REQUEST_PASSWORD": {
         "message" : "비밀번호 유효성 검증에 실패했습니다."
     },
+    "BAD_REQUEST_SECRET_KEY": {
+        "message" : "시크릿 키 유효성 검증에 실패했습니다."
+    },
     "BAD_REQUEST_NICKNAME": {
         "message" : "닉네임 유효성 검증에 실패했습니다."
     },

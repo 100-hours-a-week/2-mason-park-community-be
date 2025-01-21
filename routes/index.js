@@ -1,7 +1,6 @@
 const express = require('express');
 
 const router = express.Router();
-const authenticator = require('../middlewares/authMiddleware');
 
 const authRoutes = require('./authRoutes');
 const userRoutes = require('./userRoutes');
@@ -15,6 +14,6 @@ router.use('/users', userRoutes);
 router.use('/posts', postRoutes);
 router.use('/posts/:post_id', commentRoutes);
 router.use('/s3', S3Routes);
-router.use('/admin', authenticator.isAdmin, adminRoutes);
+router.use('/admin', adminRoutes);
 
 module.exports = router;
