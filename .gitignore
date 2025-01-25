@@ -249,3 +249,4 @@ node_modules
 .env
 data/
 *.config.js
+setting.sh
