@@ -42,7 +42,7 @@ app.use('/api', router);
 app.get('/api/healthcheck', (req, res, next) => {
     return res
         .status(200)
-        .send('OK EB 배포 성공');
+        .send('OK');
 })
 
 // 에러 핸들링
