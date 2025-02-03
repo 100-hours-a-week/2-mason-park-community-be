@@ -73,6 +73,9 @@ const status = {
     "FORBIDDEN_COMMENT": {
         "message" : "해당 댓글에 접근 권한이 없습니다."
     },
+    "FORBIDDEN_NOTIFICATION": {
+        "message" : "해당 알림에 접근 권한이 없습니다."
+    },
     /* ---- 404 ---- */
     "NOT_FOUND_USER": {
         "message" : "해당 유저가 존재하지 않습니다."
@@ -85,6 +88,9 @@ const status = {
     },
     "NOT_FOUND_POST_THUMBS": {
         "message" : "해당 게시글 좋아요가 존재하지 않습니다."
+    },
+    "NOT_FOUND_NOTIFICATION": {
+        "message" : "해당 알림이 존재하지 않습니다."
     },
     /* ---- 409 ---- */
     "CONFLICT_EMAIL": {

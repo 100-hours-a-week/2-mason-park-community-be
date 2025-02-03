@@ -41,7 +41,7 @@ exports.findAll = async (conn, limit, offset, viewerId) => {
 
 
     const countQuery = `SELECT COUNT(*) AS total FROM POSTS`;
-    const [row] = await conn.query(countQuery, [limit, offset]);
+    const [row] = await conn.query(countQuery);
 
     return response.page(
         null,
