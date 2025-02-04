@@ -1,7 +1,7 @@
 const transaction = require("../db/transaction");
 const validator = require("../utils/validator");
 const {ValidationError, NotFoundError, ForbiddenError} = require("../utils/error");
-const status = require("../utils/message");
+const { status } = require("../utils/message");
 const { notificationClients } = require("../utils/global")
 const notificationModel = require("../models/notificationModel");
 const response = require("../utils/response");
@@ -27,12 +27,33 @@ exports.subscribeNotification = async (req, res, next) => {
 
     // 연결 종료 시 제거
     req.on("close", () => {
+        console.log(`${user_id} SSE 연결 종료`);
         notificationClients[user_id] = notificationClients[user_id].filter(client => client !== res);
 
         if (notificationClients[user_id].length === 0) {
             delete notificationClients[user_id];
         }
     })
+}
+
+exports.sendNotification = async (conn, payload) => {
+    // 알림 저장
+    const result = await notificationModel.save(
+        conn,
+        payload.notification_type,
+        payload.message,
+        payload.sender.user_id,
+        payload.receiver.user_id
+    )
+
+    if (notificationClients[payload.receiver.user_id]) {
+        notificationClients[payload.receiver.user_id].forEach(client => {
+            client.write(`data: ${JSON.stringify({
+                notification_id: Number(result.insertId),
+                ...payload
+            })}\n\n`);
+        })
+    }
 }
 
 exports.getNotifications = async (req, res, next) => {

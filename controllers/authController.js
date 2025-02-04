@@ -1,7 +1,7 @@
 const validator = require("../utils/validator");
 const response = require('../utils/response');
 const crypto = require("crypto-js");
-const status = require("../utils/message");
+const {status} = require("../utils/message");
 const {ValidationError, NotFoundError, UnauthorizedError, InternalServerError, ConflictError} = require("../utils/error");
 const transaction = require("../db/transaction");
 const userModel = require("../models/userModel");
@@ -41,15 +41,11 @@ exports.login = async (req, res, next) => {
         // 로그인 성공 세션 저장 및 쿠키 설정
         req.session.user = {
             user_id: user.user_id,
+            profile_image: user.profile_image,
+            nickname: user.nickname,
             is_authenticated: true,
             role: user.role
         };
-
-        res.cookie('user_id', user.user_id, {
-            httpOnly: true,
-            secure: false,
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
 
         return res
             .status(200)

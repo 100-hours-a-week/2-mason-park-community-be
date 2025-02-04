@@ -25,7 +25,7 @@ app.use(session({
     cookie: {	//세션 쿠키 설정 (세션 관리 시 클라이언트에 보내는 쿠키)
         httpOnly: true,
         secure: false,
-        maxAge: 7 * 24 * 60 * 60 * 1000
+        maxAge: 24 * 60 * 60 * 1000
     },
     secret: process.env.SESSION_SECRET_KEY,
     resave: false, // 세션에 변경사항이 없더라도 저장

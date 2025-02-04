@@ -1,6 +1,6 @@
 const transaction = require("../db/transaction");
 const {ValidationError, NotFoundError, UnauthorizedError, InternalServerError} = require("../utils/error");
-const status = require("../utils/message");
+const {status} = require("../utils/message");
 const userModel = require("../models/userModel");
 const response = require("../utils/response");
 const crypto = require("crypto-js");

@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const { S3Client, PutObjectCommand} = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const response = require("../utils/response");
-const status = require("../utils/message");
+const {status} = require("../utils/message");
 
 const S3 = new S3Client({
     region: 'ap-northeast-2',

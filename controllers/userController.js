@@ -3,7 +3,7 @@ const transaction = require('../db/transaction');
 const path = require('path');
 const validator = require("../utils/validator");
 const crypto = require("crypto-js");
-const status = require('../utils/message');
+const {status} = require('../utils/message');
 const response = require('../utils/response');
 const {InternalServerError, NotFoundError, ValidationError} = require("../utils/error");
 

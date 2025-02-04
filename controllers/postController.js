@@ -3,8 +3,10 @@ const postThumbsModel = require('../models/postThumbsModel');
 const transaction = require('../db/transaction');
 const response = require("../utils/response");
 const validator = require('../utils/validator');
-const status = require('../utils/message');
+const {status, notification} = require('../utils/message');
 const {ValidationError, NotFoundError, ForbiddenError} = require("../utils/error");
+const {time} = require("../utils/response");
+const {sendNotification} = require("./notificationController");
 
 exports.createPost = async (req, res, next) => {
     return await transaction(async (conn) => {
@@ -170,6 +172,12 @@ exports.thumbsUpPost = async (req, res, next) => {
             throw new ValidationError(status.BAD_REQUEST_ID.message);
         }
 
+        // Post 유효성 검사
+        const post = await postModel.findById(conn, post_id);
+        if (!post) {
+            throw new NotFoundError(status.NOT_FOUND_POST.message);
+        }
+
         // 이미 좋아요 했는지 확인
         if (await postThumbsModel.existsByUserIdAndPostId(conn, req.session.user.user_id, post_id)) {
             throw new ValidationError(status.CONFLICT_POST_THUMBS.message);
@@ -177,8 +185,29 @@ exports.thumbsUpPost = async (req, res, next) => {
 
         // 게시글 좋아요 등록
         const result = await postThumbsModel.save(conn, req.session.user.user_id, post_id);
+
         // 게시글 좋아요 증가
         await postModel.incrementThumbsCount(conn, post_id);
+
+        // 알림 전송
+        if (String(post.user_id) !== String(req.session.user.user_id)) {
+            const notificationPayload = {
+                notification_type: 'LIKE',
+                message: notification.LIKE,
+                is_read: false,
+                created_at: time(new Date()),
+                sender: {
+                    user_id: req.session.user.user_id,
+                    profile_image: req.session.user.profile_image,
+                    nickname: req.session.user.nickname,
+                },
+                receiver: {
+                    user_id: post.user_id
+                }
+            }
+
+            await sendNotification(conn, notificationPayload);
+        }
 
         return res
             .status(201)

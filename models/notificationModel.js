@@ -2,10 +2,10 @@ const response = require("../utils/response");
 const {time} = require("../utils/response");
 
 /* 알림 생성 */
-exports.save = async (conn, type, message, sender_id, receiver_id) => {
+exports.save = async (conn, notificationType, message, senderId, receiverId) => {
     // INSERT NOTIFICATIONS
-    const query = `INSERT INTO NOTIFICATIONS (notification_type, message, sender_id, receiver_id) VALUES (?, ?)`;
-    const result = await conn.query(query, [type, message, sender_id, receiver_id]);
+    const query = `INSERT INTO NOTIFICATIONS (notification_type, message, sender_id, receiver_id) VALUES (?, ?, ?, ?)`;
+    const result = await conn.query(query, [notificationType, message, senderId, receiverId]);
 
     // insertId : bigint | Number(insertId)
     return result;
@@ -22,7 +22,7 @@ exports.findAll = async (conn, limit, offset, receiverId) => {
                            n.created_at, 
                            s.user_id,
                            s.nickname,
-                           s.profile_image,
+                           s.profile_image
                           FROM NOTIFICATIONS AS n 
                           JOIN USERS AS s ON n.sender_id = s.user_id
                           WHERE n.receiver_id = ?
@@ -47,7 +47,7 @@ exports.findAll = async (conn, limit, offset, receiverId) => {
             is_read: row.is_read,
             created_at: time(row.created_at),
             sender: {
-                sender_id: row.user_id,
+                user_id: row.user_id,
                 nickname: row.nickname,
                 profile_image: row.profile_image,
             }
@@ -71,6 +71,33 @@ exports.findById = async (conn, notificationId) => {
     const [row] = await conn.query(query, [notificationId]);
 
     return row; // Notification Object | undefined
+}
+
+/* 알림 단건 조회 */
+exports.findByIdWithSender = async (conn, notificationId) => {
+    const query = `SELECT
+                    n.notification_id,
+                    n.message,
+                    n.notification_type,
+                    n.created_at,
+                    n.is_read,
+                    s.sender_id,
+                    s.profile_image,
+                    s.nickname
+                   FROM NOTIFICATIONS AS n
+                   JOIN USERS AS s ON n.sender_id = s.user_id
+                   WHERE notification_id = ?
+    `;
+
+    const [row] = await conn.query(query, [notificationId]);
+
+    return {
+        notification_id: row.notification_id,
+        notification_type: row.notification_type,
+        message: row.message,
+        is_read: row.is_read,
+        created_at: time(row.created_at),
+    }
 }
 
 /* 알림 읽음 처리 */

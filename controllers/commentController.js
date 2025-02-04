@@ -1,10 +1,12 @@
 const postModel = require('../models/postModel');
 const commentModel = require('../models/commentModel');
+const notificationController = require('../controllers/notificationController');
 const transaction = require('../db/transaction');
 const response = require("../utils/response");
 const validator = require('../utils/validator');
-const status = require('../utils/message');
+const {status, notification} = require('../utils/message');
 const {ValidationError, NotFoundError, ForbiddenError} = require("../utils/error");
+const {time} = require("../utils/response");
 
 exports.createComment = async (req, res, next) => {
     return await transaction(async (conn) => {
@@ -16,7 +18,7 @@ exports.createComment = async (req, res, next) => {
         }
 
         // Post 유효성 검사
-        const post = postModel.findById(conn, post_id);
+        const post = await postModel.findById(conn, post_id);
         if (!post) {
             throw new NotFoundError(status.NOT_FOUND_POST.message);
         }
@@ -32,6 +34,26 @@ exports.createComment = async (req, res, next) => {
 
         // 댓글 수 올리기
         await postModel.incrementCommentCount(conn,post_id);
+
+        // 알림 전송
+        if (String(post.user_id) !== String(req.session.user.user_id)) {
+            const notificationPayload = {
+                notification_type: 'COMMENT',
+                message: notification.COMMENT,
+                is_read: false,
+                created_at: time(new Date()),
+                sender: {
+                    user_id: req.session.user.user_id,
+                    profile_image: req.session.user.profile_image,
+                    nickname: req.session.user.nickname,
+                },
+                receiver: {
+                    user_id: post.user_id
+                }
+            }
+
+            await notificationController.sendNotification(conn, notificationPayload);
+        }
 
         return res
             .status(201)
