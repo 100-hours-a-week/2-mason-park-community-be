@@ -12,6 +12,7 @@ let isKeepAlive = false;
 
 const pool = require('./db/maria');
 const crypto = require("crypto-js");
+const redisClient = require("./db/redis");
 
 app.listen(PORT, () => {
     isKeepAlive = true;
@@ -22,12 +23,16 @@ app.listen(PORT, () => {
 
     pool.getConnection()
         .then(async (conn) => {
-            console.log('커넥션 풀 상태 양호');
+            console.log('Maria DB : 커넥션 풀 상태 양호');
             await createAdmin(conn);
         })
         .catch(error => {
-            console.error('커넥션 풀 상태 오류:', error);
+            console.error('Maria DB : 커넥션 풀 상태 오류:', error);
         });
+
+    redisClient.connect()
+        .then(() => console.log("Redis : 연결 성공"))
+        .catch((err) => console.error("Redis : 연결 실패", err));
 })
 
 process.on('SIGINT', () => {

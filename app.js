@@ -4,6 +4,7 @@ const logger = require('./middlewares/loggingMiddleware');
 const session = require('express-session');
 const cors = require('cors');
 const { errorHandler } = require("./middlewares/errorHandlingMiddleware");
+const {RedisStore} = require("connect-redis");
 const app = express();
 
 // == Middleware 설정 ==
@@ -21,7 +22,10 @@ app.use(cors({
 }));
 
 // 세션
+const redisClient = require("./db/redis");
+
 app.use(session({
+    store: new RedisStore({ client: redisClient }),
     cookie: {	//세션 쿠키 설정 (세션 관리 시 클라이언트에 보내는 쿠키)
         httpOnly: true,
         secure: false,
