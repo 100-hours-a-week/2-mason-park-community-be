@@ -11,7 +11,7 @@ exports.save = async (conn, notificationType, message, senderId, receiverId) => 
     return result;
 }
 
-/* 알림 조회 */
+/* 모든 알림 조회 */
 exports.findAll = async (conn, limit, offset, receiverId) => {
     // SELECT NOTIFICATIONS (with SENDER, RECEIVER)
     const contentQuery = `SELECT 
@@ -54,6 +54,52 @@ exports.findAll = async (conn, limit, offset, receiverId) => {
         }))
     )
 }
+
+/* 읽지 않은 알림 조회 */
+exports.findAllWithUnread = async (conn, limit, offset, receiverId) => {
+    // SELECT NOTIFICATIONS (with SENDER, RECEIVER)
+    const contentQuery = `SELECT 
+                           n.notification_id,
+                           n.message,
+                           n.notification_type,
+                           n.is_read,
+                           n.created_at, 
+                           s.user_id,
+                           s.nickname,
+                           s.profile_image
+                          FROM NOTIFICATIONS AS n 
+                          JOIN USERS AS s ON n.sender_id = s.user_id
+                          WHERE n.receiver_id = ? AND n.is_read = FALSE
+                          ORDER BY n.created_at DESC
+                          LIMIT ? OFFSET ?
+    `;
+    const rows = await conn.query(contentQuery, [receiverId, limit, offset]);
+
+
+    const countQuery = `SELECT COUNT(*) AS total FROM NOTIFICATIONS`;
+    const [row] = await conn.query(countQuery);
+
+    return response.page(
+        null,
+        offset,
+        limit,
+        Number(row.total),
+        rows.map(row => ({
+            notification_id: row.notification_id,
+            message: row.message,
+            notification_type: row.notification_type,
+            is_read: row.is_read,
+            created_at: time(row.created_at),
+            sender: {
+                user_id: row.user_id,
+                nickname: row.nickname,
+                profile_image: row.profile_image,
+            }
+        }))
+    )
+}
+
+
 
 /* 알림 유효성 검사용 */
 exports.findById = async (conn, notificationId) => {

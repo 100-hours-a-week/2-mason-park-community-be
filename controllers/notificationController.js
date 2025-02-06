@@ -1,6 +1,6 @@
 const transaction = require("../db/transaction");
 const validator = require("../utils/validator");
-const {ValidationError, NotFoundError, ForbiddenError} = require("../utils/error");
+const {ValidationError, NotFoundError, ForbiddenError, ConflictError} = require("../utils/error");
 const { status } = require("../utils/message");
 const { notificationClients } = require("../utils/global")
 const notificationModel = require("../models/notificationModel");
@@ -66,6 +66,34 @@ exports.getNotifications = async (req, res, next) => {
         }
 
         const pagedNotifications = await notificationModel.findAll(
+            conn,
+            parseInt(limit),
+            parseInt(offset),
+            req.session.user?.user_id
+        )
+
+        return res
+            .status(200)
+            .json(response.page(
+                status.OK.message,
+                pagedNotifications.offset,
+                pagedNotifications.limit,
+                pagedNotifications.total,
+                pagedNotifications.data,
+            ))
+    })
+}
+
+exports.getUnreadNotifications = async (req, res, next) => {
+    return await transaction(async (conn) => {
+        const {offset, limit} = req.query;
+
+        // 유효성 검사
+        if (!offset || !limit) {
+            throw new ValidationError(status.BAD_REQUEST_OFFSET_LIMIT.message);
+        }
+
+        const pagedNotifications = await notificationModel.findAllWithUnread(
             conn,
             parseInt(limit),
             parseInt(offset),

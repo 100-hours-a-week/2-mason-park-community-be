@@ -6,6 +6,7 @@ const notificationController = require('../controllers/notificationController');
 
 router.get('/subscribe', authenticator.isAuthenticated, notificationController.subscribeNotification)
 router.get('/', authenticator.isAuthenticated, notificationController.getNotifications)
+router.get('/unread', authenticator.isAuthenticated, notificationController.getUnreadNotifications)
 router.delete('/:notification_id', authenticator.isAuthenticated, notificationController.deleteNotification)
 router.patch('/:notification_id/read', authenticator.isAuthenticated, notificationController.readNotification)
 
