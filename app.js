@@ -6,6 +6,7 @@ const cors = require('cors');
 const { errorHandler } = require("./middlewares/errorHandlingMiddleware");
 const {RedisStore} = require("connect-redis");
 const app = express();
+const { prometheusMiddleware, metricsEndpoint } = require("./middlewares/metricMiddleware");
 
 // == Middleware 설정 ==
 
@@ -37,6 +38,8 @@ app.use(session({
     name: 'session_id' // 세션 쿠키 이름
 }));
 
+// Prometheus 메트릭 수집 미들웨어
+app.use(prometheusMiddleware)
 
 // Route 설정
 const router = require('./routes/index');
@@ -48,6 +51,9 @@ app.get('/api/healthcheck', (req, res, next) => {
         .status(200)
         .send('OK');
 })
+
+// Prometheus 메트릭 엔드포인트
+app.get("/metrics", metricsEndpoint);
 
 // 에러 핸들링
 app.use('/api', errorHandler);
